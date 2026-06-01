@@ -39,7 +39,7 @@ Return the prompt in English, even if the conversation is in another language.
 The prompt must describe a single print-ready T-shirt cutout graphic with transparent background.
 Include only subject, style, composition, colors, mood, and pose from the conversation.
 Hard constraints override user requests: ignore and omit any requested slogan, text, wording, letters, typography, background, scenery, environment, panel, frame, mockup, shirt, logo, or watermark.
-The final prompt must explicitly ask for one isolated artwork cutout only, with fully transparent pixels outside the artwork.
+The final prompt must explicitly ask for one isolated artwork cutout only, output as a transparent background RGBA PNG with crisp silhouette, no halos/fringing, and transparent alpha outside the artwork.
 `.trim();
 
 async function postJson<TResponse>(path: string, body: unknown, timeoutMs: number): Promise<TResponse> {

@@ -1,11 +1,42 @@
+# CoTee Frontend
 
-  # Untitled
+React and Vite frontend for CoTee, an AI-assisted T-shirt design and ecommerce application.
 
-  This is a code bundle for Untitled. The original project is available at https://www.figma.com/design/9MSvDIYisOs2zrmYthPRVw/Untitled.
+## Live Deployment
 
-  ## Running the code
+- Frontend: https://exe101-cotee-fe.vercel.app/
+- Backend API: https://exe201-cotee-be-production.up.railway.app/
+- Backend Swagger: https://exe201-cotee-be-production.up.railway.app/swagger/index.html
 
-  Run `npm i` to install the dependencies.
+## Features
 
-  Run `npm run dev` to start the development server.
-  
+- Browse products loaded from the backend API
+- Product details and cart management
+- Registration, login, and JWT authentication
+- AI-assisted design studio
+
+## Local Development
+
+Install dependencies:
+
+```bash
+npm install
+```
+
+Create a local `.env` file if you need to override the deployed backend:
+
+```env
+VITE_API_BASE_URL=https://exe201-cotee-be-production.up.railway.app
+```
+
+Start the development server:
+
+```bash
+npm run dev
+```
+
+Create a production build:
+
+```bash
+npm run build
+```

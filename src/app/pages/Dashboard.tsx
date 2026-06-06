@@ -1,7 +1,7 @@
 import { type FormEvent, type KeyboardEvent, type PointerEvent, type WheelEvent, useEffect, useRef, useState } from 'react';
 import imgAiContentImage from '../../imports/Group1/34aa2522d02cc0844a881c632b21d1859df4cbc0.png';
 import { createChatCompletion, createImagePrompt, generateImage, type ChatMessage } from '../lib/aiApi';
-import { frontMockupOptions } from '../lib/cloudinaryMockups';
+import { backMockupOptions, frontMockupOptions } from '../lib/cloudinaryMockups';
 
 type DashboardMessage = ChatMessage;
 
@@ -56,6 +56,22 @@ type CropDragState = {
   maxOffsetY: number;
 };
 
+type SpeechRecognitionResultEventLike = {
+  results: ArrayLike<ArrayLike<{ transcript: string }>>;
+};
+
+type SpeechRecognitionLike = {
+  lang: string;
+  interimResults: boolean;
+  maxAlternatives: number;
+  onresult: ((event: SpeechRecognitionResultEventLike) => void) | null;
+  onerror: (() => void) | null;
+  onend: (() => void) | null;
+  start: () => void;
+};
+
+type SpeechRecognitionConstructor = new () => SpeechRecognitionLike;
+
 const MIN_DESIGN_SIZE = 96;
 const MIN_CROP_SCALE = 1;
 const CROP_MODE_SCALE = 1.15;
@@ -65,10 +81,9 @@ const getCropBounds = (scale: number, width: number, height: number) => ({
   x: Math.max(0, ((scale - 1) * width) / 2),
   y: Math.max(0, ((scale - 1) * height) / 2),
 });
-const mockupOptions = frontMockupOptions;
-
 export default function Dashboard() {
   const promptRef = useRef<HTMLTextAreaElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const shouldRefocusPromptRef = useRef(false);
   const canvasRef = useRef<HTMLDivElement>(null);
   const designBoxRef = useRef<HTMLDivElement>(null);
@@ -85,13 +100,18 @@ export default function Dashboard() {
   const [generatedImageSrc, setGeneratedImageSrc] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isGeneratingImage, setIsGeneratingImage] = useState(false);
-  const [selectedMockupSrc, setSelectedMockupSrc] = useState(mockupOptions[0]?.src ?? '');
+  const [selectedMockupSrc, setSelectedMockupSrc] = useState(frontMockupOptions[0]?.src ?? '');
   const [designOffset, setDesignOffset] = useState({ x: 0, y: 0 });
   const [designSize, setDesignSize] = useState<{ width: number; height: number } | null>(null);
   const [isDesignSelected, setIsDesignSelected] = useState(true);
   const [isCropMode, setIsCropMode] = useState(false);
   const [cropOffset, setCropOffset] = useState({ x: 0, y: 0 });
   const [cropScale, setCropScale] = useState(MIN_CROP_SCALE);
+  const [mockupSide, setMockupSide] = useState<'front' | 'back'>('front');
+  const [studioNotice, setStudioNotice] = useState('');
+  const [isListening, setIsListening] = useState(false);
+
+  const activeMockupOptions = mockupSide === 'front' ? frontMockupOptions : backMockupOptions;
 
   const handleSendMessage = async (e: FormEvent) => {
     e.preventDefault();
@@ -120,6 +140,99 @@ export default function Dashboard() {
       setIsSubmitting(false);
       setIsGeneratingImage(false);
     }
+  };
+
+  const handleMockupSideChange = (side: 'front' | 'back') => {
+    setMockupSide(side);
+    const nextOptions = side === 'front' ? frontMockupOptions : backMockupOptions;
+    setSelectedMockupSrc(nextOptions[0]?.src ?? '');
+    setStudioNotice(`Switched to ${side} mockups.`);
+  };
+
+  const handleResetDesign = () => {
+    dragStateRef.current = null;
+    resizeStateRef.current = null;
+    cropDragStateRef.current = null;
+    setDesignOffset({ x: 0, y: 0 });
+    setDesignSize(null);
+    setCropOffset({ x: 0, y: 0 });
+    setCropScale(MIN_CROP_SCALE);
+    setIsCropMode(false);
+    setIsDesignSelected(true);
+    setStudioNotice('Design placement reset.');
+  };
+
+  const handleIncreaseDesignSize = () => {
+    const designBox = designBoxRef.current;
+    const canvas = canvasRef.current;
+    if (!designBox || !canvas) return;
+
+    const boxRect = designBox.getBoundingClientRect();
+    const canvasRect = canvas.getBoundingClientRect();
+    const nextWidth = Math.min(boxRect.width * 1.12, canvasRect.width * 0.8);
+    const nextHeight = Math.min(boxRect.height * 1.12, canvasRect.height * 0.8);
+    setDesignSize({ width: nextWidth, height: nextHeight });
+    setIsDesignSelected(true);
+    setStudioNotice('Design size increased.');
+  };
+
+  const handleAttachImage = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleAttachedImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      if (typeof reader.result !== 'string') return;
+      setGeneratedImageSrc(reader.result);
+      handleResetDesign();
+      setStudioNotice(`${file.name} added to the mockup.`);
+    };
+    reader.readAsDataURL(file);
+    e.target.value = '';
+  };
+
+  const handleVoicePrompt = () => {
+    const SpeechRecognition =
+      (window as typeof window & { SpeechRecognition?: SpeechRecognitionConstructor }).SpeechRecognition ??
+      (window as typeof window & { webkitSpeechRecognition?: SpeechRecognitionConstructor }).webkitSpeechRecognition;
+
+    if (!SpeechRecognition) {
+      setStudioNotice('Voice input is not supported in this browser.');
+      return;
+    }
+
+    const recognition = new SpeechRecognition();
+    recognition.lang = 'en-US';
+    recognition.interimResults = false;
+    recognition.maxAlternatives = 1;
+    setIsListening(true);
+    setStudioNotice('Listening...');
+    recognition.onresult = (event) => {
+      const transcript = event.results[0]?.[0]?.transcript?.trim();
+      if (transcript) {
+        setPrompt((current) => [current, transcript].filter(Boolean).join(' '));
+        setStudioNotice('Voice prompt added.');
+      }
+    };
+    recognition.onerror = () => {
+      setStudioNotice('Voice input stopped before a prompt was captured.');
+    };
+    recognition.onend = () => {
+      setIsListening(false);
+    };
+    recognition.start();
+  };
+
+  const handleExportDesign = () => {
+    const link = document.createElement('a');
+    link.href = designImageSrc;
+    link.download = 'cotee-design.png';
+    link.click();
+    setStudioNotice('Design image export started.');
   };
 
   const handleGenerateImage = async () => {
@@ -420,27 +533,47 @@ export default function Dashboard() {
   const isThinking = isSubmitting && !isGeneratingImage;
 
   return (
-    <div className="flex h-[calc(100vh-200px)] bg-[#f8f7f5]">
+    <div className="w-full py-8">
+      <div className="max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="mb-6 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+          <div>
+            <div className="mb-3 inline-flex rounded-full border border-[#fed7aa] bg-[#fff7ed] px-4 py-2 text-sm font-bold text-[#ff9429]">
+              AI T-Shirt Studio
+            </div>
+            <h1 className="text-4xl font-bold leading-tight text-[#0f172a]" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
+              Design on a live mockup
+            </h1>
+            <p className="mt-2 max-w-2xl text-[#64748b]">
+              Chat through a concept, generate artwork, then position it directly on the shirt.
+            </p>
+          </div>
+          <div className="rounded-xl border border-[#e2e8f0] bg-white px-4 py-3 text-sm font-semibold text-[#475569] shadow-sm">
+            Double-click artwork to crop
+          </div>
+        </div>
+
+        <div className="grid min-h-[760px] grid-cols-1 overflow-hidden rounded-2xl border border-[#e2e8f0] bg-white shadow-xl shadow-slate-200/60 lg:grid-cols-[360px_minmax(0,1fr)]">
       {/* Left Sidebar - AI Chat */}
-      <div className="w-[384px] bg-[rgba(248,250,252,0.5)] border-r border-[#e2e8f0] flex flex-col">
+      <div className="bg-white border-b border-[#e2e8f0] flex min-h-[620px] flex-col lg:border-b-0 lg:border-r">
         {/* Chat Header */}
-        <div className="bg-white border-b border-[#e2e8f0] px-4 py-4">
-          <h2 className="text-sm font-bold text-[#64748b] uppercase tracking-wide">
+        <div className="bg-[#fffaf5] border-b border-[#fed7aa] px-5 py-5">
+          <h2 className="text-sm font-bold text-[#0f172a] uppercase tracking-wide">
             AI Design Assistant
           </h2>
+          <p className="mt-1 text-sm text-[#64748b]">Refine the design before generating artwork.</p>
         </div>
 
         {/* Messages */}
-        <div className="flex-1 overflow-y-auto p-4 space-y-6">
+        <div className="flex-1 overflow-y-auto bg-[#f8f7f5] p-5 space-y-6">
           {messages.map((message, i) => (
             <div key={i} className={`flex gap-3 ${message.role === 'user' ? 'flex-row-reverse' : ''}`}>
               {message.role === 'assistant' ? (
-                <div className="w-8 h-8 bg-[#2e5aa7] rounded-full flex items-center justify-center shrink-0">
-                  <span className="text-white text-xs">AI</span>
+                <div className="w-8 h-8 bg-[#ff9429] rounded-lg flex items-center justify-center shrink-0">
+                  <span className="text-white text-xs font-bold">AI</span>
                 </div>
               ) : (
-                <div className="w-8 h-8 bg-[#f8e6a0] rounded-full flex items-center justify-center shrink-0">
-                  <span className="text-xs">You</span>
+                <div className="w-8 h-8 bg-[#0f172a] rounded-lg flex items-center justify-center shrink-0">
+                  <span className="text-xs font-bold text-white">You</span>
                 </div>
               )}
               <div className={`flex-1 ${message.role === 'user' ? 'text-right' : ''}`}>
@@ -449,18 +582,18 @@ export default function Dashboard() {
                 </div>
                 <div className={`inline-block rounded-2xl px-4 py-3 ${
                   message.role === 'assistant'
-                    ? 'bg-white border border-[#f1f5f9] rounded-tl-sm'
-                    : 'bg-[#ff9429] text-white rounded-tr-sm'
+                    ? 'bg-white border border-[#e2e8f0] rounded-tl-sm text-[#0f172a] shadow-sm'
+                    : 'bg-[#ff9429] text-white rounded-tr-sm shadow-sm'
                 }`}>
-                  <p className="text-sm">{message.content}</p>
+                  <p className="text-sm leading-6">{message.content}</p>
                 </div>
               </div>
             </div>
           ))}
           {isThinking && (
             <div className="flex gap-3">
-              <div className="w-8 h-8 bg-[#2e5aa7] rounded-full flex items-center justify-center shrink-0">
-                <span className="text-white text-xs">AI</span>
+              <div className="w-8 h-8 bg-[#ff9429] rounded-lg flex items-center justify-center shrink-0">
+                <span className="text-white text-xs font-bold">AI</span>
               </div>
               <div className="flex-1">
                 <div className="text-[11px] font-semibold text-[#94a3b8] mb-1">
@@ -475,7 +608,14 @@ export default function Dashboard() {
         </div>
 
         {/* Input */}
-        <div className="bg-white border-t border-[#e2e8f0] p-4 space-y-3">
+        <div className="bg-white border-t border-[#e2e8f0] p-5 space-y-3">
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/png,image/jpeg,image/webp"
+            className="hidden"
+            onChange={handleAttachedImageChange}
+          />
           <form onSubmit={handleSendMessage} className="relative">
             <textarea
               ref={promptRef}
@@ -484,7 +624,7 @@ export default function Dashboard() {
               onKeyDown={handlePromptKeyDown}
               placeholder="Type a design prompt..."
               disabled={isSubmitting}
-              className="w-full bg-[#f1f5f9] rounded-xl px-4 py-3 pr-24 resize-none focus:outline-none focus:bg-white focus:ring-2 focus:ring-[#ffa62b] transition-all disabled:cursor-not-allowed disabled:opacity-60"
+              className="w-full bg-[#f8f7f5] border border-[#e2e8f0] rounded-xl px-4 py-3 pr-24 resize-none focus:outline-none focus:bg-white focus:ring-2 focus:ring-[#ffa62b] transition-all disabled:cursor-not-allowed disabled:opacity-60"
               rows={2}
               style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}
             />
@@ -513,50 +653,95 @@ export default function Dashboard() {
             </button>
           </form>
           <div className="flex gap-4 text-xs">
-            <button className="flex items-center gap-1 text-[#94a3b8] hover:text-[#ff9429]">
+            <button
+              type="button"
+              onClick={handleAttachImage}
+              className="flex items-center gap-1 text-[#94a3b8] hover:text-[#ff9429]"
+            >
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
               </svg>
               <span className="font-bold uppercase">Attach</span>
             </button>
-            <button className="flex items-center gap-1 text-[#94a3b8] hover:text-[#ff9429]">
+            <button
+              type="button"
+              onClick={handleVoicePrompt}
+              className={`flex items-center gap-1 ${isListening ? 'text-[#ff9429]' : 'text-[#94a3b8] hover:text-[#ff9429]'}`}
+            >
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
               </svg>
-              <span className="font-bold uppercase">Voice</span>
+              <span className="font-bold uppercase">{isListening ? 'Listening' : 'Voice'}</span>
             </button>
           </div>
+          {studioNotice && (
+            <div className="rounded-lg bg-[#fff7ed] px-3 py-2 text-xs font-semibold text-[#c2410c]">
+              {studioNotice}
+            </div>
+          )}
         </div>
       </div>
 
       {/* Main Canvas Area */}
-      <div className="flex-1 flex flex-col bg-[#f1f5f9]">
+      <div className="flex min-w-0 flex-col bg-[#f8f7f5]">
         {/* Toolbar */}
-        <div className="bg-white/80 backdrop-blur-sm border-b border-[#e2e8f0] px-6 py-3 flex items-center justify-between">
-          <div className="flex items-center gap-4">
+        <div className="bg-white border-b border-[#e2e8f0] px-4 py-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex flex-wrap items-center gap-4">
             <span className="font-semibold text-[#0f172a]">T-Shirt Mockup v1.2</span>
             <div className="h-4 w-px bg-[#cbd5e1]" />
             <div className="bg-[#f1f5f9] rounded-lg p-1 flex gap-1">
-              <button className="px-3 py-1 bg-white rounded text-xs font-bold text-[#0f172a] shadow-sm">
+              <button
+                type="button"
+                onClick={() => handleMockupSideChange('front')}
+                className={`px-3 py-1 rounded text-xs font-bold transition-colors ${
+                  mockupSide === 'front'
+                    ? 'bg-white text-[#0f172a] shadow-sm'
+                    : 'text-[#64748b] hover:bg-white/50'
+                }`}
+              >
                 Front
               </button>
-              <button className="px-3 py-1 text-xs font-bold text-[#64748b] hover:bg-white/50 rounded">
+              <button
+                type="button"
+                onClick={() => handleMockupSideChange('back')}
+                className={`px-3 py-1 rounded text-xs font-bold transition-colors ${
+                  mockupSide === 'back'
+                    ? 'bg-white text-[#0f172a] shadow-sm'
+                    : 'text-[#64748b] hover:bg-white/50'
+                }`}
+              >
                 Back
               </button>
             </div>
           </div>
           <div className="flex items-center gap-2">
-            <button className="p-2 hover:bg-[#f1f5f9] rounded-lg transition-colors">
+            <button
+              type="button"
+              onClick={handleResetDesign}
+              className="p-2 hover:bg-[#f1f5f9] rounded-lg transition-colors"
+              aria-label="Reset design placement"
+              title="Reset design placement"
+            >
               <svg className="w-5 h-5 text-[#64748b]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
               </svg>
             </button>
-            <button className="p-2 hover:bg-[#f1f5f9] rounded-lg transition-colors">
+            <button
+              type="button"
+              onClick={handleIncreaseDesignSize}
+              className="p-2 hover:bg-[#f1f5f9] rounded-lg transition-colors"
+              aria-label="Increase design size"
+              title="Increase design size"
+            >
               <svg className="w-5 h-5 text-[#64748b]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
               </svg>
             </button>
-            <button className="px-4 py-2 bg-[#2e5aa7] text-white rounded-lg hover:bg-[#2648] transition-colors flex items-center gap-2">
+            <button
+              type="button"
+              onClick={handleExportDesign}
+              className="px-4 py-2 bg-[#ff9429] text-white rounded-lg hover:bg-[#ff8c1a] transition-colors flex items-center gap-2"
+            >
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
               </svg>
@@ -567,13 +752,13 @@ export default function Dashboard() {
 
         {/* Canvas */}
         <div
-          className="relative flex-1 flex items-center justify-center p-12 pr-32"
+          className="relative flex-1 flex min-h-[680px] items-center justify-center p-5 pb-32 sm:p-8 lg:p-10 lg:pr-32"
           style={{
-            backgroundImage: `radial-gradient(circle at 50% 50%, rgba(229,231,235,1) 0%, rgba(229,231,235,0) 70%)`,
+            backgroundImage: `linear-gradient(135deg, rgba(255,245,235,0.8), rgba(248,247,245,0.2)), radial-gradient(circle at 50% 50%, rgba(226,232,240,0.95) 0%, rgba(226,232,240,0) 68%)`,
             backgroundSize: 'cover'
           }}
         >
-          <div ref={canvasRef} className="relative w-[760px] h-[840px] bg-white rounded-2xl shadow-2xl overflow-hidden">
+          <div ref={canvasRef} className="relative aspect-[19/21] w-full max-w-[760px] bg-white rounded-2xl shadow-2xl shadow-slate-300/70 overflow-hidden">
             {/* Mockup */}
             <div className="absolute inset-0 opacity-90 mix-blend-multiply">
               {selectedMockupSrc ? (
@@ -628,7 +813,7 @@ export default function Dashboard() {
                       src={designImageSrc}
                       alt="Design"
                       draggable={false}
-                      className="w-full h-full object-cover select-none"
+                      className="w-full h-full object-cover select-none opacity-75"
                       style={{ transform: `scale(${cropScale})` }}
                     />
                   </div>
@@ -717,14 +902,14 @@ export default function Dashboard() {
               }}
             />
           </div>
-          <div className="absolute bottom-12 right-4 top-12 w-24 overflow-y-auto rounded-xl border border-[#e2e8f0] bg-white/80 p-2 shadow-sm">
-            <div className="space-y-2">
-              {mockupOptions.map((mockup) => (
+          <div className="absolute bottom-5 left-5 right-5 h-24 overflow-x-auto rounded-xl border border-[#e2e8f0] bg-white/90 p-2 shadow-sm backdrop-blur lg:bottom-10 lg:left-auto lg:right-4 lg:top-10 lg:h-auto lg:w-24 lg:overflow-y-auto lg:overflow-x-hidden">
+            <div className="flex gap-2 lg:block lg:space-y-2">
+              {activeMockupOptions.map((mockup) => (
                 <button
                   key={mockup.id}
                   type="button"
                   onClick={() => setSelectedMockupSrc(mockup.src)}
-                  className={`block h-24 w-full overflow-hidden rounded-lg border-2 bg-white transition-all ${
+                  className={`block h-20 w-20 shrink-0 overflow-hidden rounded-lg border-2 bg-white transition-all lg:h-24 lg:w-full ${
                     selectedMockupSrc === mockup.src
                       ? 'border-[#ff9429] shadow-md'
                       : 'border-transparent hover:border-[#cbd5e1]'
@@ -743,6 +928,8 @@ export default function Dashboard() {
               ))}
             </div>
           </div>
+        </div>
+      </div>
         </div>
       </div>
     </div>

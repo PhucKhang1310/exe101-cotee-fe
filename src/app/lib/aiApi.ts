@@ -1,4 +1,4 @@
-const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:5001').replace(/\/$/, '');
+import { API_BASE_URL } from './api';
 const CHAT_TIMEOUT_MS = 20_000;
 const IMAGE_TIMEOUT_MS = 120_000;
 

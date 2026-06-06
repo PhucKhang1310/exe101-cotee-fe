@@ -1,7 +1,56 @@
-import { Link } from 'react-router';
+import { type FormEvent, useState } from 'react';
+import { Link, useLocation, useNavigate } from 'react-router';
 import imgGoogle from '../../imports/Group1/a5ec32389763b208dc6a3392b5de2d21577083ce.png';
+import { login } from '../lib/api';
+import { signInWithToken } from '../lib/store';
 
 export default function Login() {
+  const [notice, setNotice] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const navigate = useNavigate();
+  const location = useLocation();
+  const redirectTo = new URLSearchParams(location.search).get('redirect') || '/';
+
+  const handleGoogleLogin = () => {
+    setNotice('Google login is not connected on the backend yet. Please sign in with email.');
+  };
+
+  const handleLogin = async (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    if (isSubmitting) return;
+
+    const formData = new FormData(e.currentTarget);
+    const account = String(formData.get('account') ?? '').trim();
+    const password = String(formData.get('password') ?? '');
+
+    if (!account || !password) {
+      setNotice('Enter your account and password to sign in.');
+      return;
+    }
+
+    if (!account.includes('@')) {
+      setNotice('Enter the email address registered with your CoTee account.');
+      return;
+    }
+
+    setIsSubmitting(true);
+    setNotice('');
+
+    try {
+      const response = await login(account, password);
+      if (!response.token) {
+        throw new Error(response.message ?? 'Login did not return an auth token.');
+      }
+
+      signInWithToken(response.user?.email ?? account, response.token);
+      navigate(redirectTo);
+    } catch (error) {
+      setNotice(error instanceof Error ? error.message : 'Unable to sign in. Please try again.');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   return (
     <div className="w-full min-h-[calc(100vh-200px)] flex items-center justify-center py-12">
       <div className="max-w-md w-full mx-auto px-8">
@@ -12,10 +61,19 @@ export default function Login() {
               Welcome Back
             </h1>
             <p className="text-[#64748b]">Sign in to your CoTee account</p>
+            {location.search.includes('redirect=') && (
+              <p className="mt-3 rounded-xl border border-[#fed7aa] bg-[#fff7ed] px-4 py-3 text-sm font-semibold text-[#c2410c]">
+                Please sign in before buying or adding items to your cart.
+              </p>
+            )}
           </div>
 
           {/* Social Login */}
-          <button className="w-full flex items-center justify-center gap-3 px-6 py-4 bg-white border-2 border-[#e2e8f0] rounded-xl hover:border-[#ffa62b] hover:bg-[#fff5eb] transition-all mb-6 group">
+          <button
+            type="button"
+            onClick={handleGoogleLogin}
+            className="w-full flex items-center justify-center gap-3 px-6 py-4 bg-white border-2 border-[#e2e8f0] rounded-xl hover:border-[#ffa62b] hover:bg-[#fff5eb] transition-all mb-6 group"
+          >
             <img src={imgGoogle} alt="Google" className="w-5 h-5" />
             <span className="font-semibold text-[#475569] group-hover:text-[#0f172a]">
               Continue with Google
@@ -32,14 +90,21 @@ export default function Login() {
             </div>
           </div>
 
+          {notice && (
+            <div className="mb-6 rounded-xl border border-[#fed7aa] bg-[#fff7ed] px-4 py-3 text-sm font-semibold text-[#c2410c]">
+              {notice}
+            </div>
+          )}
+
           {/* Form */}
-          <form className="space-y-4">
+          <form onSubmit={handleLogin} className="space-y-4">
             <div>
               <label className="block text-sm font-semibold text-[#0f172a] mb-2">
-                Email Address
+                Email or Username
               </label>
               <input
-                type="email"
+                name="account"
+                type="text"
                 placeholder="your@email.com"
                 className="w-full px-4 py-3 bg-[#f8f7f5] border border-[#e2e8f0] rounded-xl focus:outline-none focus:border-[#ffa62b] focus:bg-white transition-all"
                 style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}
@@ -51,6 +116,7 @@ export default function Login() {
                 Password
               </label>
               <input
+                name="password"
                 type="password"
                 placeholder="••••••••"
                 className="w-full px-4 py-3 bg-[#f8f7f5] border border-[#e2e8f0] rounded-xl focus:outline-none focus:border-[#ffa62b] focus:bg-white transition-all"
@@ -70,10 +136,11 @@ export default function Login() {
 
             <button
               type="submit"
+              disabled={isSubmitting}
               className="w-full px-6 py-4 bg-[#ff9429] text-white font-bold rounded-xl hover:bg-[#ff8c1a] transition-all shadow-lg hover:shadow-xl mt-6"
               style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}
             >
-              Sign In
+              {isSubmitting ? 'Signing in...' : 'Sign In'}
             </button>
           </form>
 

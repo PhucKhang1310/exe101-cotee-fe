@@ -66,21 +66,32 @@ export default function About() {
           <h2 className="text-4xl font-bold text-center text-[#0f172a] mb-12" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
             Our Team
           </h2>
-          <div className="grid grid-cols-4 gap-8">
-            {[
-              { name: 'Alex Chen', role: 'CEO & Founder', avatar: '👨‍💼' },
-              { name: 'Sarah Johnson', role: 'Head of AI', avatar: '👩‍💻' },
-              { name: 'Michael Park', role: 'Lead Designer', avatar: '👨‍🎨' },
-              { name: 'Emily Davis', role: 'Product Lead', avatar: '👩‍💼' }
-            ].map((member, i) => (
-              <div key={i} className="text-center group">
-                <div className="w-40 h-40 mx-auto mb-4 bg-gradient-to-br from-[#fff5eb] to-[#ffe5cc] rounded-2xl flex items-center justify-center text-6xl group-hover:scale-105 transition-transform">
-                  {member.avatar}
-                </div>
-                <h3 className="font-bold text-[#0f172a] mb-1">{member.name}</h3>
-                <p className="text-sm text-[#64748b]">{member.role}</p>
+          <div className="space-y-10">
+            <div className="max-w-xs mx-auto text-center group">
+              <div className="w-40 h-40 mx-auto mb-4 bg-gradient-to-br from-[#2563c9] to-[#8dc3f7] rounded-2xl flex items-center justify-center text-6xl group-hover:scale-105 transition-transform">
+                👨‍💼
               </div>
-            ))}
+              <h3 className="font-bold text-[#0f172a] mb-1">Huynh Kha Tu</h3>
+              <p className="text-sm font-semibold text-[#ff9429]">CEO</p>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-8">
+              {[
+                { name: 'Phan Tai Duc', role: 'Operations', avatar: '🧭' },
+                { name: 'Nguyen Long Vu', role: 'Technology', avatar: '💻' },
+                { name: 'Nguyen Phuc Khang', role: 'Technology', avatar: '⚙️' },
+                { name: 'Tran Hoai Nam', role: 'Finance', avatar: '📊' },
+                { name: 'Pham Quoc Duy', role: 'Marketing', avatar: '📣' }
+              ].map((member, i) => (
+                <div key={i} className="text-center group">
+                  <div className="w-32 h-32 mx-auto mb-4 bg-gradient-to-br from-[#fff5eb] to-[#dbeafe] rounded-2xl flex items-center justify-center text-5xl group-hover:scale-105 transition-transform">
+                    {member.avatar}
+                  </div>
+                  <h3 className="font-bold text-[#0f172a] mb-1">{member.name}</h3>
+                  <p className="text-sm text-[#64748b]">{member.role}</p>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
 

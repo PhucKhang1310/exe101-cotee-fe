@@ -1,3 +1,4 @@
+import { Link } from 'react-router';
 import imgAiContentImage from '../../imports/Group1/34aa2522d02cc0844a881c632b21d1859df4cbc0.png';
 
 export default function Features() {
@@ -128,9 +129,9 @@ export default function Features() {
           <p className="text-xl mb-8 opacity-90 max-w-2xl mx-auto">
             Start creating amazing designs with our AI-powered platform today
           </p>
-          <button className="px-12 py-5 bg-white text-[#ff9429] font-bold text-lg rounded-xl hover:bg-[#f8f7f5] transition-all shadow-xl">
+          <Link to="/dashboard" className="inline-block px-12 py-5 bg-white text-[#ff9429] font-bold text-lg rounded-xl hover:bg-[#f8f7f5] transition-all shadow-xl">
             Start Free Trial
-          </button>
+          </Link>
         </div>
       </div>
     </div>

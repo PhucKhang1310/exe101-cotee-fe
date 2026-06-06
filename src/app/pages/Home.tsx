@@ -1,8 +1,8 @@
 import { Link } from 'react-router';
 import imgHeroHeaderImage from '../../imports/Group1/edd2e113f39d9ebb4369e972b767551b7af85794.png';
-import imgImage from '../../imports/Group1/2b566c36d05a907327c0d36cfa12b303603c2c23.png';
-import imgImage1 from '../../imports/Group1/854372afc0f292fd23f2cdd8eb1108f72ac54dff.png';
-import imgImage2 from '../../imports/Group1/b5e7b01317ce2b1811adc522276d76e959198f02.png';
+import imgColorBlockTee from '../../imports/Group1/0a1b574084aac0c75514c8e172068e175277fd18.png';
+import imgBlackModelTee from '../../imports/Group1/5e3944577a47e4fd1ef8f4ce3e2e18b527b4170e.png';
+import imgSunsetTee from '../../imports/Group1/bbe43010c361832f5f6ddc683cdf378a735b2558.png';
 
 export default function Home() {
   return (
@@ -139,15 +139,19 @@ export default function Home() {
           </div>
 
           <div className="grid grid-cols-3 gap-8">
-            {[imgImage, imgImage1, imgImage2].map((img, i) => (
-              <Link key={i} to="/browse" className="group">
+            {[
+              { image: imgColorBlockTee, title: 'Color Block Tee' },
+              { image: imgBlackModelTee, title: 'Black Studio Tee' },
+              { image: imgSunsetTee, title: 'Cream Sunset Tee' },
+            ].map((product, i) => (
+              <Link key={product.title} to={`/product/${i + 1}`} className="group">
                 <div className="bg-[#f8f7f5] rounded-2xl overflow-hidden border-2 border-transparent group-hover:border-[#ffa62b] transition-all">
                   <div className="aspect-square overflow-hidden">
-                    <img src={img} alt={`Design ${i + 1}`} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+                    <img src={product.image} alt={product.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
                   </div>
                   <div className="p-6">
-                    <h3 className="font-bold text-[#0f172a] mb-2">Design #{i + 1}</h3>
-                    <p className="text-sm text-[#64748b]">Custom AI-generated design</p>
+                    <h3 className="font-bold text-[#0f172a] mb-2">{product.title}</h3>
+                    <p className="text-sm text-[#64748b]">Custom AI-ready apparel product</p>
                   </div>
                 </div>
               </Link>

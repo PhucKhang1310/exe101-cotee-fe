@@ -7,12 +7,13 @@ import About from './pages/About';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import Dashboard from './pages/Dashboard';
+import Product from './pages/Product';
+import Cart from './pages/Cart';
 
 export default function App() {
   return (
     <BrowserRouter>
       <Routes>
-        <Route path="/dashboard" element={<Dashboard />} />
         <Route
           path="/*"
           element={
@@ -22,6 +23,9 @@ export default function App() {
                 <Route path="/browse" element={<Browse />} />
                 <Route path="/features" element={<Features />} />
                 <Route path="/about" element={<About />} />
+                <Route path="/dashboard" element={<Dashboard />} />
+                <Route path="/product/:id" element={<Product />} />
+                <Route path="/cart" element={<Cart />} />
                 <Route path="/login" element={<Login />} />
                 <Route path="/register" element={<Register />} />
               </Routes>

@@ -1,10 +1,28 @@
+import { useEffect, useState } from 'react';
+import { ImageOff } from 'lucide-react';
 import { Link } from 'react-router';
 import imgHeroHeaderImage from '../../imports/Group1/edd2e113f39d9ebb4369e972b767551b7af85794.png';
-import imgColorBlockTee from '../../imports/Group1/0a1b574084aac0c75514c8e172068e175277fd18.png';
-import imgBlackModelTee from '../../imports/Group1/5e3944577a47e4fd1ef8f4ce3e2e18b527b4170e.png';
-import imgSunsetTee from '../../imports/Group1/bbe43010c361832f5f6ddc683cdf378a735b2558.png';
+import { getProducts, type ApiProduct } from '../lib/api';
 
 export default function Home() {
+  const [featuredProducts, setFeaturedProducts] = useState<ApiProduct[]>([]);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    getProducts()
+      .then((products) => {
+        if (isMounted) setFeaturedProducts(products.slice(0, 3));
+      })
+      .catch(() => {
+        if (isMounted) setFeaturedProducts([]);
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
   return (
     <div className="w-full">
       {/* Hero Section */}
@@ -138,25 +156,33 @@ export default function Home() {
             </Link>
           </div>
 
+          {featuredProducts.length > 0 ? (
           <div className="grid grid-cols-3 gap-8">
-            {[
-              { image: imgColorBlockTee, title: 'Color Block Tee' },
-              { image: imgBlackModelTee, title: 'Black Studio Tee' },
-              { image: imgSunsetTee, title: 'Cream Sunset Tee' },
-            ].map((product, i) => (
-              <Link key={product.title} to={`/product/${i + 1}`} className="group">
+            {featuredProducts.map((product) => (
+              <Link key={product.id} to={`/product/${product.id}`} className="group">
                 <div className="bg-[#f8f7f5] rounded-2xl overflow-hidden border-2 border-transparent group-hover:border-[#ffa62b] transition-all">
                   <div className="aspect-square overflow-hidden">
-                    <img src={product.image} alt={product.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+                    {product.imageUrl ? (
+                      <img src={product.imageUrl} alt={product.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+                    ) : (
+                      <div className="grid h-full place-items-center text-[#94a3b8]">
+                        <ImageOff className="h-12 w-12" />
+                      </div>
+                    )}
                   </div>
                   <div className="p-6">
-                    <h3 className="font-bold text-[#0f172a] mb-2">{product.title}</h3>
-                    <p className="text-sm text-[#64748b]">Custom AI-ready apparel product</p>
+                    <h3 className="font-bold text-[#0f172a] mb-2">{product.name}</h3>
+                    <p className="text-sm text-[#64748b]">${(product.price / 100).toFixed(2)} · {product.stock} in stock</p>
                   </div>
                 </div>
               </Link>
             ))}
           </div>
+          ) : (
+            <div className="rounded-2xl border border-[#e2e8f0] bg-[#f8f7f5] p-10 text-center text-[#64748b]">
+              Featured products will appear when the catalog API is available.
+            </div>
+          )}
         </div>
       </section>
 

@@ -6,6 +6,7 @@ import Features from './pages/Features';
 import About from './pages/About';
 import Login from './pages/Login';
 import Register from './pages/Register';
+import VerifyEmail from './pages/VerifyEmail';
 import Dashboard from './pages/Dashboard';
 import Product from './pages/Product';
 import Cart from './pages/Cart';
@@ -28,6 +29,7 @@ export default function App() {
                 <Route path="/cart" element={<Cart />} />
                 <Route path="/login" element={<Login />} />
                 <Route path="/register" element={<Register />} />
+                <Route path="/verify-email" element={<VerifyEmail />} />
               </Routes>
             </Layout>
           }

@@ -45,7 +45,8 @@ export default function Register() {
     try {
       const response = await register(fullName, email, password);
       setNotice(response.message ?? 'Registration successful. Please check your email to verify your account.');
-      window.setTimeout(() => navigate(`/login?redirect=${encodeURIComponent(redirectTo)}`), 1200);
+      const params = new URLSearchParams({ email, redirect: redirectTo });
+      window.setTimeout(() => navigate(`/verify-email?${params.toString()}`), 1200);
     } catch (error) {
       setNotice(error instanceof Error ? error.message : 'Unable to create your account. Please try again.');
     } finally {

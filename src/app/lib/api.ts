@@ -35,7 +35,17 @@ type LoginResponse = {
 type RegisterResponse = {
   message?: string;
   email?: string;
-  verificationUrl?: string;
+};
+
+type VerifyEmailResponse = {
+  message?: string;
+  email?: string;
+  fullName?: string;
+  isEmailVerified: boolean;
+};
+
+type ResendVerificationResponse = {
+  message?: string;
 };
 
 export function getAuthToken(): string {
@@ -99,6 +109,17 @@ export async function register(fullName: string, email: string, password: string
   return request<RegisterResponse>('/api/Auth/register', {
     method: 'POST',
     body: JSON.stringify({ fullName, email, password }),
+  });
+}
+
+export async function verifyEmail(token: string): Promise<VerifyEmailResponse> {
+  return request<VerifyEmailResponse>(`/api/Auth/verify-email?token=${encodeURIComponent(token)}`);
+}
+
+export async function resendVerification(email: string): Promise<ResendVerificationResponse> {
+  return request<ResendVerificationResponse>('/api/Auth/resend-verification', {
+    method: 'POST',
+    body: JSON.stringify({ email }),
   });
 }
 

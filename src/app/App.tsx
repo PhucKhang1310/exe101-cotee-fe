@@ -11,6 +11,7 @@ import Dashboard from './pages/Dashboard';
 import Product from './pages/Product';
 import Cart from './pages/Cart';
 import PaymentResult from './pages/PaymentResult';
+import RequireAuth from './components/RequireAuth';
 
 export default function App() {
   return (
@@ -25,7 +26,14 @@ export default function App() {
                 <Route path="/browse" element={<Browse />} />
                 <Route path="/features" element={<Features />} />
                 <Route path="/about" element={<About />} />
-                <Route path="/dashboard" element={<Dashboard />} />
+                <Route
+                  path="/dashboard"
+                  element={
+                    <RequireAuth>
+                      <Dashboard />
+                    </RequireAuth>
+                  }
+                />
                 <Route path="/product/:id" element={<Product />} />
                 <Route path="/cart" element={<Cart />} />
                 <Route path="/login" element={<Login />} />

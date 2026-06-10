@@ -1,25 +1,14 @@
 import { useEffect, useState } from 'react';
-import { ArrowLeft, Heart, ImageOff, Minus, Plus, ShoppingBag } from 'lucide-react';
+import { ArrowLeft, Heart, Minus, Plus, ShoppingBag } from 'lucide-react';
 import { Link, useNavigate, useParams } from 'react-router';
 import { addCartItem as addApiCartItem, getProduct, getProducts, type ApiProduct } from '../lib/api';
 import { addCartItem as addLocalCartItem, isAuthenticated } from '../lib/store';
+import { formatVnd, getTeeProductImage } from '../lib/commerce';
 
 const sizes = ['XS', 'S', 'M', 'L', 'XL', '2XL'];
 
-function formatPrice(priceInCents: number) {
-  return `$${(priceInCents / 100).toFixed(2)}`;
-}
-
 function ProductImage({ product, className }: { product: ApiProduct; className?: string }) {
-  if (product.imageUrl) {
-    return <img src={product.imageUrl} alt={product.name} className={className} />;
-  }
-
-  return (
-    <div className={`grid place-items-center bg-[#f8f7f5] text-[#94a3b8] ${className ?? ''}`}>
-      <ImageOff className="h-14 w-14" />
-    </div>
-  );
+  return <img src={getTeeProductImage(product.id)} alt={product.name} className={className} />;
 }
 
 export default function Product() {
@@ -83,8 +72,8 @@ export default function Product() {
         productId: product.id,
         name: product.name,
         category: 'CoTee Product',
-        price: product.price / 100,
-        image: product.imageUrl ?? '',
+        price: product.price,
+        image: getTeeProductImage(product.id),
         size: selectedSize,
         color: '#ff9429',
         quantity,
@@ -151,7 +140,7 @@ export default function Product() {
             <h1 className="mt-4 text-4xl font-bold leading-tight text-[#0f172a]" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
               {product.name}
             </h1>
-            <p className="mt-5 text-4xl font-bold text-[#0f172a]">{formatPrice(product.price)}</p>
+            <p className="mt-5 text-4xl font-bold text-[#0f172a]">{formatVnd(product.price)}</p>
 
             <div className="mt-8">
               <h2 className="mb-3 text-sm font-bold uppercase text-[#0f172a]">Size</h2>
@@ -223,7 +212,7 @@ export default function Product() {
                   </div>
                   <div className="p-4">
                     <h3 className="font-bold text-[#0f172a]">{relatedProduct.name}</h3>
-                    <p className="mt-1 text-sm text-[#64748b]">{formatPrice(relatedProduct.price)}</p>
+                    <p className="mt-1 text-sm text-[#64748b]">{formatVnd(relatedProduct.price)}</p>
                   </div>
                 </Link>
               ))}

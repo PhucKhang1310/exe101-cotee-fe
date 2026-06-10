@@ -1,13 +1,10 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Heart, ImageOff, Search } from 'lucide-react';
+import { Heart, Search } from 'lucide-react';
 import { Link } from 'react-router';
 import { getProducts, type ApiProduct } from '../lib/api';
+import { formatVnd, getTeeProductImage } from '../lib/commerce';
 
 const availabilityOptions = ['All Products', 'In Stock', 'Out of Stock'];
-
-function formatPrice(priceInCents: number) {
-  return `$${(priceInCents / 100).toFixed(2)}`;
-}
 
 export default function Browse() {
   const [products, setProducts] = useState<ApiProduct[]>([]);
@@ -151,15 +148,9 @@ export default function Browse() {
                 <Link key={product.id} to={`/product/${encodeURIComponent(product.id)}`} className="group">
                   <div className="overflow-hidden rounded-2xl border-2 border-transparent bg-white shadow-sm transition-all group-hover:border-[#ffa62b] group-hover:shadow-xl">
                     <div className="relative aspect-square overflow-hidden bg-[#f8f7f5]">
-                      {product.imageUrl ? (
-                        <img src={product.imageUrl} alt={product.name} className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105" />
-                      ) : (
-                        <div className="grid h-full place-items-center text-[#94a3b8]">
-                          <ImageOff className="h-12 w-12" />
-                        </div>
-                      )}
+                      <img src={getTeeProductImage(product.id)} alt={product.name} className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105" />
                       <div className="absolute right-4 top-4 rounded-full bg-white/90 px-3 py-1 text-sm font-bold text-[#ff9429] backdrop-blur-sm">
-                        {formatPrice(product.price)}
+                        {formatVnd(product.price)}
                       </div>
                     </div>
                     <div className="p-6">

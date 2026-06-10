@@ -35,6 +35,7 @@ type LoginResponse = {
 type RegisterResponse = {
   message?: string;
   email?: string;
+  isEmailVerified: boolean;
 };
 
 type VerifyEmailResponse = {
@@ -46,6 +47,12 @@ type VerifyEmailResponse = {
 
 type ResendVerificationResponse = {
   message?: string;
+};
+
+export type CheckoutResponse = {
+  orderCode: string;
+  payUrl: string;
+  totalAmount: number;
 };
 
 export function getAuthToken(): string {
@@ -161,4 +168,11 @@ export async function removeCartItem(productId: string, size: string): Promise<A
 
 export async function clearCart(): Promise<void> {
   await request('/api/Carts', { method: 'DELETE' });
+}
+
+export async function checkout(fullName: string, phone: string, address: string): Promise<CheckoutResponse> {
+  return request<CheckoutResponse>('/api/Orders/checkout', {
+    method: 'POST',
+    body: JSON.stringify({ fullName, phone, address }),
+  });
 }

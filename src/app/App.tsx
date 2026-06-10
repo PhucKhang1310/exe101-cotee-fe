@@ -10,6 +10,7 @@ import VerifyEmail from './pages/VerifyEmail';
 import Dashboard from './pages/Dashboard';
 import Product from './pages/Product';
 import Cart from './pages/Cart';
+import PaymentResult from './pages/PaymentResult';
 
 export default function App() {
   return (
@@ -30,6 +31,7 @@ export default function App() {
                 <Route path="/login" element={<Login />} />
                 <Route path="/register" element={<Register />} />
                 <Route path="/verify-email" element={<VerifyEmail />} />
+                <Route path="/payment-result" element={<PaymentResult />} />
               </Routes>
             </Layout>
           }

@@ -1,8 +1,9 @@
-import { useEffect, useMemo, useState } from 'react';
+import { type FormEvent, useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router';
 import { Minus, Plus, ShoppingBag, Trash2 } from 'lucide-react';
 import {
   clearCart as clearApiCart,
+  checkout as checkoutApi,
   getCart,
   removeCartItem as removeApiCartItem,
   updateCartItem as updateApiCartItem,
@@ -28,6 +29,10 @@ export default function Cart() {
   const navigate = useNavigate();
   const [items, setItems] = useState<CartItem[]>([]);
   const [notice, setNotice] = useState('');
+  const [fullName, setFullName] = useState('');
+  const [phone, setPhone] = useState('');
+  const [address, setAddress] = useState('');
+  const [isCheckingOut, setIsCheckingOut] = useState(false);
 
   useEffect(() => {
     if (!isAuthenticated()) {
@@ -52,7 +57,7 @@ export default function Cart() {
     () => items.reduce((sum, item) => sum + item.price * item.quantity, 0),
     [items],
   );
-  const shipping = items.length > 0 ? 4.95 : 0;
+  const shipping = 0;
   const total = subtotal + shipping;
 
   const updateItems = (nextItems: CartItem[]) => {
@@ -104,13 +109,32 @@ export default function Cart() {
     }
   };
 
-  const checkout = () => {
+  const checkout = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
     if (items.length === 0) {
       setNotice('Add at least one item before checkout.');
       return;
     }
 
-    setNotice('Checkout is ready to connect to a payment provider.');
+    if (!fullName.trim() || !phone.trim() || !address.trim()) {
+      setNotice('Enter your full name, phone number, and shipping address.');
+      return;
+    }
+
+    setIsCheckingOut(true);
+    setNotice('');
+
+    try {
+      const response = await checkoutApi(fullName.trim(), phone.trim(), address.trim());
+      if (!response.payUrl) {
+        throw new Error('The payment provider did not return a payment URL.');
+      }
+
+      window.location.assign(response.payUrl);
+    } catch (error) {
+      setNotice(error instanceof Error ? error.message : 'Unable to start checkout.');
+      setIsCheckingOut(false);
+    }
   };
 
   return (
@@ -214,20 +238,49 @@ export default function Cart() {
                 </div>
                 <div className="flex justify-between text-[#64748b]">
                   <span>Shipping</span>
-                  <span>${shipping.toFixed(2)}</span>
+                  <span>Free</span>
                 </div>
                 <div className="border-t border-[#e2e8f0] pt-3 flex justify-between text-lg font-bold text-[#0f172a]">
                   <span>Total</span>
                   <span>${total.toFixed(2)}</span>
                 </div>
               </div>
-              <button
-                type="button"
-                onClick={checkout}
-                className="mt-6 w-full rounded-xl bg-[#ff9429] px-6 py-4 font-bold text-white shadow-lg shadow-orange-200 hover:bg-[#ff8c1a]"
-              >
-                Checkout
-              </button>
+              <form onSubmit={checkout} className="mt-6 space-y-3">
+                <input
+                  type="text"
+                  value={fullName}
+                  onChange={(event) => setFullName(event.target.value)}
+                  placeholder="Full name"
+                  autoComplete="name"
+                  required
+                  className="w-full rounded-xl border border-[#e2e8f0] bg-white px-4 py-3 text-sm focus:border-[#ffa62b] focus:outline-none"
+                />
+                <input
+                  type="tel"
+                  value={phone}
+                  onChange={(event) => setPhone(event.target.value)}
+                  placeholder="Phone number"
+                  autoComplete="tel"
+                  required
+                  className="w-full rounded-xl border border-[#e2e8f0] bg-white px-4 py-3 text-sm focus:border-[#ffa62b] focus:outline-none"
+                />
+                <textarea
+                  value={address}
+                  onChange={(event) => setAddress(event.target.value)}
+                  placeholder="Shipping address"
+                  autoComplete="street-address"
+                  required
+                  rows={3}
+                  className="w-full resize-none rounded-xl border border-[#e2e8f0] bg-white px-4 py-3 text-sm focus:border-[#ffa62b] focus:outline-none"
+                />
+                <button
+                  type="submit"
+                  disabled={isCheckingOut}
+                  className="w-full rounded-xl bg-[#ff9429] px-6 py-4 font-bold text-white shadow-lg shadow-orange-200 hover:bg-[#ff8c1a] disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  {isCheckingOut ? 'Opening MoMo...' : 'Pay with MoMo'}
+                </button>
+              </form>
               <button
                 type="button"
                 onClick={clearCart}

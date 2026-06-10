@@ -1,4 +1,4 @@
-import { API_BASE_URL } from './api';
+import { API_BASE_URL, getAuthToken } from './api';
 const CHAT_TIMEOUT_MS = 20_000;
 const IMAGE_TIMEOUT_MS = 120_000;
 
@@ -45,6 +45,11 @@ The final prompt must explicitly ask for one isolated artwork cutout only, outpu
 async function postJson<TResponse>(path: string, body: unknown, timeoutMs: number): Promise<TResponse> {
   const controller = new AbortController();
   const timeoutId = window.setTimeout(() => controller.abort(), timeoutMs);
+  const token = getAuthToken();
+
+  if (!token) {
+    throw new Error('Sign in to use AI features.');
+  }
 
   let response: Response;
   try {
@@ -52,6 +57,7 @@ async function postJson<TResponse>(path: string, body: unknown, timeoutMs: numbe
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
       },
       body: JSON.stringify(body),
       signal: controller.signal,

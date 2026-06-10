@@ -10,6 +10,7 @@ import {
   type ApiCartItem,
 } from '../lib/api';
 import { type CartItem, getCartItems, isAuthenticated, setCartItems } from '../lib/store';
+import { formatVnd, getTeeProductImage } from '../lib/commerce';
 
 function mapApiCartItem(item: ApiCartItem): CartItem {
   return {
@@ -17,8 +18,8 @@ function mapApiCartItem(item: ApiCartItem): CartItem {
     productId: item.productId,
     name: item.productName,
     category: 'CoTee Product',
-    price: item.price / 100,
-    image: item.imageUrl,
+    price: item.price,
+    image: getTeeProductImage(item.productId),
     size: item.size,
     color: '#ff9429',
     quantity: item.quantity,
@@ -192,7 +193,7 @@ export default function Cart() {
                           </span>
                         </div>
                       </div>
-                      <div className="text-lg font-bold text-[#0f172a]">${(item.price * item.quantity).toFixed(2)}</div>
+                      <div className="text-lg font-bold text-[#0f172a]">{formatVnd(item.price * item.quantity)}</div>
                     </div>
 
                     <div className="mt-5 flex items-center justify-between">
@@ -234,7 +235,7 @@ export default function Cart() {
               <div className="mt-6 space-y-3 text-sm">
                 <div className="flex justify-between text-[#64748b]">
                   <span>Subtotal</span>
-                  <span>${subtotal.toFixed(2)}</span>
+                  <span>{formatVnd(subtotal)}</span>
                 </div>
                 <div className="flex justify-between text-[#64748b]">
                   <span>Shipping</span>
@@ -242,7 +243,7 @@ export default function Cart() {
                 </div>
                 <div className="border-t border-[#e2e8f0] pt-3 flex justify-between text-lg font-bold text-[#0f172a]">
                   <span>Total</span>
-                  <span>${total.toFixed(2)}</span>
+                  <span>{formatVnd(total)}</span>
                 </div>
               </div>
               <form onSubmit={checkout} className="mt-6 space-y-3">

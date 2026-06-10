@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react';
-import { ImageOff } from 'lucide-react';
 import { Link } from 'react-router';
-import imgHeroHeaderImage from '../../imports/Group1/edd2e113f39d9ebb4369e972b767551b7af85794.png';
+import imgHeroHeaderImage from '../../assets/cotee-tee-hero.png';
 import { getProducts, type ApiProduct } from '../lib/api';
+import { formatVnd, getTeeProductImage } from '../lib/commerce';
 
 export default function Home() {
   const [featuredProducts, setFeaturedProducts] = useState<ApiProduct[]>([]);
@@ -162,17 +162,11 @@ export default function Home() {
               <Link key={product.id} to={`/product/${product.id}`} className="group">
                 <div className="bg-[#f8f7f5] rounded-2xl overflow-hidden border-2 border-transparent group-hover:border-[#ffa62b] transition-all">
                   <div className="aspect-square overflow-hidden">
-                    {product.imageUrl ? (
-                      <img src={product.imageUrl} alt={product.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
-                    ) : (
-                      <div className="grid h-full place-items-center text-[#94a3b8]">
-                        <ImageOff className="h-12 w-12" />
-                      </div>
-                    )}
+                    <img src={getTeeProductImage(product.id)} alt={product.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
                   </div>
                   <div className="p-6">
                     <h3 className="font-bold text-[#0f172a] mb-2">{product.name}</h3>
-                    <p className="text-sm text-[#64748b]">${(product.price / 100).toFixed(2)} · {product.stock} in stock</p>
+                    <p className="text-sm text-[#64748b]">{formatVnd(product.price)} · {product.stock} in stock</p>
                   </div>
                 </div>
               </Link>

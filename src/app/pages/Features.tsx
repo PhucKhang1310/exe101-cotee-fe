@@ -1,5 +1,5 @@
 import { Link } from 'react-router';
-import imgAiContentImage from '../../imports/Group1/34aa2522d02cc0844a881c632b21d1859df4cbc0.png';
+import imgAiContentImage from '../../assets/cotee-tee-hero.png';
 
 export default function Features() {
   return (

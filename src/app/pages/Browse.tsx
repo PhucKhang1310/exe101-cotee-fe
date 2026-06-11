@@ -4,65 +4,113 @@ import { Link } from 'react-router';
 import { getProducts, type ApiProduct } from '../lib/api';
 import { formatVnd, getTeeProductImage } from '../lib/commerce';
 
-const availabilityOptions = ['All Products', 'In Stock', 'Out of Stock'];
+type BrowseMode = 'all' | 'shirt' | 'design';
+type AssetKind = Exclude<BrowseMode, 'all'>;
 
 export default function Browse() {
-  const [products, setProducts] = useState<ApiProduct[]>([]);
-  const [availability, setAvailability] = useState('All Products');
+  const [mode, setMode] = useState<BrowseMode>('all');
+  const [items, setItems] = useState<BrowseItem[]>([]);
   const [search, setSearch] = useState('');
   const [sort, setSort] = useState('Name');
   const [visibleCount, setVisibleCount] = useState(6);
-  const [savedProducts, setSavedProducts] = useState<string[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState('');
+  const [savedItems, setSavedItems] = useState<string[]>([]);
+  const [shirtViews, setShirtViews] = useState<Record<string, 'front' | 'back'>>({});
 
   useEffect(() => {
-    let isMounted = true;
-
-    getProducts()
-      .then((response) => {
-        if (!isMounted) return;
-        setProducts(response);
-        setError('');
-      })
-      .catch((requestError) => {
-        if (!isMounted) return;
-        setError(requestError instanceof Error ? requestError.message : 'Unable to load products.');
-      })
-      .finally(() => {
-        if (isMounted) setIsLoading(false);
-      });
-
-    return () => {
-      isMounted = false;
-    };
+    setItems(getCloudinaryBrowseAssets().map(toBrowseItem));
   }, []);
 
-  const filteredProducts = useMemo(() => {
-    const normalizedSearch = search.trim().toLowerCase();
-    const filtered = products.filter((product) => {
-      const matchesSearch = !normalizedSearch || product.name.toLowerCase().includes(normalizedSearch);
-      const matchesAvailability =
-        availability === 'All Products' ||
-        (availability === 'In Stock' && product.stock > 0) ||
-        (availability === 'Out of Stock' && product.stock === 0);
+  const shirtItems = useMemo(() => items.filter((item) => item.kind === 'shirt'), [items]);
+  const designItems = useMemo(() => items.filter((item) => item.kind === 'design'), [items]);
+  const activeItems = mode === 'all' ? items : mode === 'design' ? designItems : shirtItems;
 
-      return matchesSearch && matchesAvailability;
-    });
+  const filteredItems = useMemo(() => filterAndSortItems(activeItems, search, sort), [activeItems, search, sort]);
+  const filteredShirts = useMemo(() => filterAndSortItems(shirtItems, search, sort), [shirtItems, search, sort]);
+  const filteredDesigns = useMemo(() => filterAndSortItems(designItems, search, sort), [designItems, search, sort]);
 
-    return [...filtered].sort((a, b) => {
-      if (sort === 'Price: Low to High') return a.price - b.price;
-      if (sort === 'Price: High to Low') return b.price - a.price;
-      if (sort === 'Stock') return b.stock - a.stock;
-      return a.name.localeCompare(b.name);
-    });
-  }, [availability, products, search, sort]);
+  const visibleItems = filteredItems.slice(0, visibleCount);
 
-  const visibleProducts = filteredProducts.slice(0, visibleCount);
-
-  const toggleSavedProduct = (id: string) => {
-    setSavedProducts((current) =>
+  const toggleSavedItem = (id: string) => {
+    setSavedItems((current) =>
       current.includes(id) ? current.filter((savedId) => savedId !== id) : [...current, id],
+    );
+  };
+
+  const setShirtView = (id: string, view: 'front' | 'back') => {
+    setShirtViews((current) => ({ ...current, [id]: view }));
+  };
+
+  const renderAssetCard = (item: BrowseItem, compact = false) => {
+    const isSaved = savedItems.includes(item.id);
+    const isDesign = item.kind === 'design';
+    const shirtView = shirtViews[item.id] ?? 'front';
+    const imageUrl = item.kind === 'shirt' && shirtView === 'back' && item.backImageUrl ? item.backImageUrl : item.imageUrl;
+
+    return (
+      <article
+        key={item.id}
+        className={`group overflow-hidden rounded-2xl border-2 border-transparent bg-white shadow-sm transition-all hover:border-[#ffa62b] hover:shadow-xl ${
+          compact ? 'w-[300px] shrink-0 snap-start sm:w-[340px]' : ''
+        }`}
+      >
+        <div
+          className="relative aspect-square overflow-hidden"
+          style={isDesign ? previewStyles.design : previewStyles.shirt}
+        >
+          {imageUrl ? (
+            <img
+              src={imageUrl}
+              alt={item.name}
+              className={`h-full w-full transition-transform duration-300 group-hover:scale-105 ${
+                isDesign ? 'object-contain p-7' : 'object-cover'
+              }`}
+            />
+          ) : (
+            <div className="grid h-full place-items-center text-[#94a3b8]">
+              <ImageOff className="h-12 w-12" />
+            </div>
+          )}
+
+          {item.kind === 'shirt' && item.backImageUrl && (
+            <div className="absolute right-4 top-4 flex rounded-full bg-white/90 p-1 text-sm font-semibold text-[#64748b] shadow-sm backdrop-blur-sm">
+              <button
+                type="button"
+                onClick={() => setShirtView(item.id, 'front')}
+                className={`rounded-full px-3 py-1 transition-colors ${
+                  shirtView === 'front' ? 'bg-[#ff9429] text-white' : 'hover:bg-[#fff5eb]'
+                }`}
+              >
+                Front
+              </button>
+              <button
+                type="button"
+                onClick={() => setShirtView(item.id, 'back')}
+                className={`rounded-full px-3 py-1 transition-colors ${
+                  shirtView === 'back' ? 'bg-[#ff9429] text-white' : 'hover:bg-[#fff5eb]'
+                }`}
+              >
+                Back
+              </button>
+            </div>
+          )}
+        </div>
+        <div className="p-6">
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <h2 className="font-bold text-[#0f172a] transition-colors group-hover:text-[#ff9429]">{item.name}</h2>
+              <p className="mt-2 text-sm text-[#64748b]">{item.description}</p>
+            </div>
+            <button
+              type="button"
+              onClick={() => toggleSavedItem(item.id)}
+              className="shrink-0 text-[#ff9429]"
+              aria-label={isSaved ? `Remove saved ${item.name}` : `Save ${item.name}`}
+            >
+              <Heart className={`h-5 w-5 ${isSaved ? 'fill-current' : ''}`} />
+            </button>
+          </div>
+        </div>
+      </article>
     );
   };
 
@@ -71,35 +119,35 @@ export default function Browse() {
       <div className="max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-8">
         <div className="mb-10">
           <h1 className="text-5xl font-bold text-[#0f172a]" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
-            Browse Products
+            Browse Assets
           </h1>
-          <p className="mt-4 text-lg text-[#64748b]">Explore the latest products from the CoTee catalog.</p>
+          <p className="mt-4 text-lg text-[#64748b]">Pick a design graphic or a plain shirt base for your next CoTee mockup.</p>
         </div>
 
-        {error && (
-          <div className="mb-6 rounded-xl border border-[#fecaca] bg-[#fef2f2] px-4 py-3 text-sm font-semibold text-[#b91c1c]">
-            Products could not be loaded: {error}
-          </div>
-        )}
-
         <div className="mb-8 flex items-center gap-3 overflow-x-auto pb-3">
-          {availabilityOptions.map((option) => (
-            <button
-              key={option}
-              type="button"
-              onClick={() => {
-                setAvailability(option);
-                setVisibleCount(6);
-              }}
-              className={`whitespace-nowrap rounded-xl px-6 py-3 font-semibold transition-colors ${
-                availability === option
-                  ? 'bg-[#ff9429] text-white shadow-lg'
-                  : 'border border-[#e2e8f0] bg-white text-[#64748b] hover:border-[#ffa62b]'
-              }`}
-            >
-              {option}
-            </button>
-          ))}
+          {browseModes.map((option) => {
+            const Icon = option.icon;
+            const isActive = mode === option.id;
+            return (
+              <button
+                key={option.id}
+                type="button"
+                onClick={() => {
+                  setMode(option.id);
+                  setSearch('');
+                  setVisibleCount(6);
+                }}
+                className={`flex min-w-[144px] items-center justify-center gap-2 whitespace-nowrap rounded-xl px-6 py-3 font-semibold transition-colors ${
+                  isActive
+                    ? 'bg-[#ff9429] text-white shadow-lg'
+                    : 'border border-[#e2e8f0] bg-white text-[#64748b] hover:border-[#ffa62b]'
+                }`}
+              >
+                <Icon className="h-5 w-5" />
+                {option.label}
+              </button>
+            );
+          })}
         </div>
 
         <div className="mb-8 flex flex-col gap-4 sm:flex-row">
@@ -111,7 +159,7 @@ export default function Browse() {
                 setSearch(event.target.value);
                 setVisibleCount(6);
               }}
-              placeholder="Search products..."
+              placeholder={mode === 'all' ? 'Search assets...' : mode === 'design' ? 'Search designs...' : 'Search shirts...'}
               className="w-full rounded-xl border border-[#e2e8f0] bg-white px-6 py-4 pr-12 focus:border-[#ffa62b] focus:outline-none"
             />
             <Search className="absolute right-4 top-1/2 h-5 w-5 -translate-y-1/2 text-[#94a3b8]" />
@@ -122,25 +170,51 @@ export default function Browse() {
             className="rounded-xl border border-[#e2e8f0] bg-white px-6 py-4 focus:border-[#ffa62b] focus:outline-none"
           >
             <option>Name</option>
-            <option>Stock</option>
-            <option>Price: Low to High</option>
-            <option>Price: High to Low</option>
+            <option>Newest</option>
           </select>
         </div>
 
-        {isLoading ? (
-          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            {[0, 1, 2, 3, 4, 5].map((item) => (
-              <div key={item} className="overflow-hidden rounded-2xl border border-[#e2e8f0] bg-white">
-                <div className="aspect-square animate-pulse bg-[#e2e8f0]" />
-                <div className="space-y-3 p-6">
-                  <div className="h-5 w-2/3 animate-pulse rounded bg-[#e2e8f0]" />
-                  <div className="h-4 w-1/3 animate-pulse rounded bg-[#f1f5f9]" />
+        {mode === 'all' ? (
+          <div className="space-y-12">
+            <section>
+              <div className="mb-4 flex items-end justify-between gap-4">
+                <div>
+                  <h2 className="text-2xl font-bold text-[#0f172a]">Shirt</h2>
+                  <p className="mt-1 text-sm text-[#64748b]">Plain shirt bases from Cloudinary.</p>
                 </div>
+                <span className="text-sm font-semibold text-[#94a3b8]">{filteredShirts.length} items</span>
               </div>
-            ))}
+              {filteredShirts.length > 0 ? (
+                <div className="-mx-4 flex snap-x gap-6 overflow-x-auto px-4 pb-4 sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8">
+                  {filteredShirts.map((item) => renderAssetCard(item, true))}
+                </div>
+              ) : (
+                <div className="rounded-2xl border border-[#e2e8f0] bg-white p-8 text-center text-sm text-[#64748b]">
+                  No shirts found.
+                </div>
+              )}
+            </section>
+
+            <section>
+              <div className="mb-4 flex items-end justify-between gap-4">
+                <div>
+                  <h2 className="text-2xl font-bold text-[#0f172a]">Design</h2>
+                  <p className="mt-1 text-sm text-[#64748b]">Standalone graphics from Cloudinary.</p>
+                </div>
+                <span className="text-sm font-semibold text-[#94a3b8]">{filteredDesigns.length} items</span>
+              </div>
+              {filteredDesigns.length > 0 ? (
+                <div className="-mx-4 flex snap-x gap-6 overflow-x-auto px-4 pb-4 sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8">
+                  {filteredDesigns.map((item) => renderAssetCard(item, true))}
+                </div>
+              ) : (
+                <div className="rounded-2xl border border-[#e2e8f0] bg-white p-8 text-center text-sm text-[#64748b]">
+                  No designs found.
+                </div>
+              )}
+            </section>
           </div>
-        ) : visibleProducts.length > 0 ? (
+        ) : visibleItems.length > 0 ? (
           <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
             {visibleProducts.map((product) => {
               const isSaved = savedProducts.includes(product.id);
@@ -180,21 +254,19 @@ export default function Browse() {
           </div>
         ) : (
           <div className="rounded-2xl border border-[#e2e8f0] bg-white p-10 text-center">
-            <h2 className="font-bold text-[#0f172a]">{error ? 'Products unavailable' : 'No products found'}</h2>
-            <p className="mt-2 text-sm text-[#64748b]">
-              {error ? 'Try again after the API is available.' : 'Try another availability filter or search term.'}
-            </p>
+            <h2 className="font-bold text-[#0f172a]">No {mode === 'design' ? 'designs' : 'shirts'} found</h2>
+            <p className="mt-2 text-sm text-[#64748b]">Try another search term.</p>
           </div>
         )}
 
-        {visibleCount < filteredProducts.length && (
+        {mode !== 'all' && visibleCount < filteredItems.length && (
           <div className="mt-12 text-center">
             <button
               type="button"
               onClick={() => setVisibleCount((current) => current + 6)}
               className="rounded-xl border-2 border-[#e2e8f0] bg-white px-8 py-4 font-bold text-[#0f172a] transition-colors hover:border-[#ffa62b] hover:bg-[#fff5eb]"
             >
-              Load More Products
+              Load More {mode === 'design' ? 'Designs' : 'Shirts'}
             </button>
           </div>
         )}

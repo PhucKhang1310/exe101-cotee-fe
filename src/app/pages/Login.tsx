@@ -3,6 +3,7 @@ import { Link, useLocation, useNavigate } from 'react-router';
 import imgGoogle from '../../imports/Group1/a5ec32389763b208dc6a3392b5de2d21577083ce.png';
 import { login } from '../lib/api';
 import { signInWithToken } from '../lib/store';
+import { getAuthClaims } from '../lib/auth';
 
 export default function Login() {
   const [notice, setNotice] = useState('');
@@ -43,7 +44,8 @@ export default function Login() {
       }
 
       signInWithToken(response.user?.email ?? account, response.token);
-      navigate(redirectTo);
+      const role = response.user?.role ?? getAuthClaims(response.token)?.role;
+      navigate(redirectTo === '/' && role?.toLowerCase() === 'admin' ? '/admin' : redirectTo);
     } catch (error) {
       setNotice(error instanceof Error ? error.message : 'Unable to sign in. Please try again.');
     } finally {

@@ -21,12 +21,14 @@ export type ApiCartItem = {
   size: string;
 };
 
-type ApiUser = {
+export type ApiUser = {
+  id?: string;
   email?: string;
   fullName?: string;
+  role?: string;
 };
 
-type LoginResponse = {
+export type LoginResponse = {
   token?: string;
   user?: ApiUser;
   message?: string;
@@ -67,7 +69,7 @@ export function clearAuthToken() {
   window.localStorage.removeItem(TOKEN_KEY);
 }
 
-async function request<TResponse>(path: string, options: RequestInit = {}): Promise<TResponse> {
+export async function request<TResponse>(path: string, options: RequestInit = {}): Promise<TResponse> {
   const headers = new Headers(options.headers);
   const token = getAuthToken();
 

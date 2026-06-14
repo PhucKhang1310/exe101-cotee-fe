@@ -1,11 +1,41 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Heart, Search } from 'lucide-react';
-import { Link } from 'react-router';
-import { getProducts, type ApiProduct } from '../lib/api';
-import { formatVnd, getTeeProductImage } from '../lib/commerce';
+import { Heart, ImageOff, Palette, Search, Shirt } from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
+import { getCloudinaryBrowseAssets, type CloudinaryBrowseAsset } from '../lib/cloudinaryAssets';
 
 type BrowseMode = 'all' | 'shirt' | 'design';
 type AssetKind = Exclude<BrowseMode, 'all'>;
+type BrowseItem = CloudinaryBrowseAsset;
+
+const browseModes: Array<{ id: BrowseMode; label: string; icon: LucideIcon }> = [
+  { id: 'all', label: 'All Assets', icon: Search },
+  { id: 'shirt', label: 'Shirts', icon: Shirt },
+  { id: 'design', label: 'Designs', icon: Palette },
+];
+
+const previewStyles: Record<AssetKind, React.CSSProperties> = {
+  shirt: { backgroundColor: '#f8f7f5' },
+  design: { backgroundColor: '#fff7ed' },
+};
+
+function filterAndSortItems(items: BrowseItem[], search: string, sort: string) {
+  const normalizedSearch = search.trim().toLowerCase();
+  const filteredItems = normalizedSearch
+    ? items.filter((item) =>
+        [item.name, item.description, item.meta, item.kind, ...item.tags].some((value) =>
+          value.toLowerCase().includes(normalizedSearch),
+        ),
+      )
+    : items;
+
+  return [...filteredItems].sort((first, second) => {
+    if (sort === 'Newest') {
+      return second.id.localeCompare(first.id);
+    }
+
+    return first.name.localeCompare(second.name);
+  });
+}
 
 export default function Browse() {
   const [mode, setMode] = useState<BrowseMode>('all');
@@ -17,7 +47,7 @@ export default function Browse() {
   const [shirtViews, setShirtViews] = useState<Record<string, 'front' | 'back'>>({});
 
   useEffect(() => {
-    setItems(getCloudinaryBrowseAssets().map(toBrowseItem));
+    setItems(getCloudinaryBrowseAssets());
   }, []);
 
   const shirtItems = useMemo(() => items.filter((item) => item.kind === 'shirt'), [items]);
@@ -216,41 +246,7 @@ export default function Browse() {
           </div>
         ) : visibleItems.length > 0 ? (
           <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            {visibleProducts.map((product) => {
-              const isSaved = savedProducts.includes(product.id);
-              return (
-                <Link key={product.id} to={`/product/${encodeURIComponent(product.id)}`} className="group">
-                  <div className="overflow-hidden rounded-2xl border-2 border-transparent bg-white shadow-sm transition-all group-hover:border-[#ffa62b] group-hover:shadow-xl">
-                    <div className="relative aspect-square overflow-hidden bg-[#f8f7f5]">
-                      <img src={getTeeProductImage(product.id)} alt={product.name} className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105" />
-                      <div className="absolute right-4 top-4 rounded-full bg-white/90 px-3 py-1 text-sm font-bold text-[#ff9429] backdrop-blur-sm">
-                        {formatVnd(product.price)}
-                      </div>
-                    </div>
-                    <div className="p-6">
-                      <h2 className="font-bold text-[#0f172a] transition-colors group-hover:text-[#ff9429]">{product.name}</h2>
-                      <div className="mt-4 flex items-center justify-between">
-                        <span className={`text-sm font-semibold ${product.stock > 0 ? 'text-[#15803d]' : 'text-[#b91c1c]'}`}>
-                          {product.stock > 0 ? `${product.stock} in stock` : 'Out of stock'}
-                        </span>
-                        <button
-                          type="button"
-                          onClick={(event) => {
-                            event.preventDefault();
-                            event.stopPropagation();
-                            toggleSavedProduct(product.id);
-                          }}
-                          className="text-[#ff9429]"
-                          aria-label={isSaved ? 'Remove saved product' : 'Save product'}
-                        >
-                          <Heart className={`h-5 w-5 ${isSaved ? 'fill-current' : ''}`} />
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                </Link>
-              );
-            })}
+            {visibleItems.map((item) => renderAssetCard(item))}
           </div>
         ) : (
           <div className="rounded-2xl border border-[#e2e8f0] bg-white p-10 text-center">

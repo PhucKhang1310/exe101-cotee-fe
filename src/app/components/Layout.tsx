@@ -52,11 +52,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
           <div className="flex items-center justify-between">
             {/* Logo */}
             <Link to="/" className="flex items-center gap-3">
-              <div className="bg-[#ffa62b] rounded-lg p-2">
-                <svg className="w-5 h-5" viewBox="0 0 24 24" fill="white">
-                  <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" stroke="currentColor" strokeWidth="2" fill="none"/>
-                </svg>
-              </div>
+              <img src="/cotee-logo.svg" alt="CoTee" className="h-10 w-10 rounded-xl" />
               <div>
                 <h1 className="text-xl font-bold text-[#0f172a]" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>CoTee</h1>
                 <p className="text-xs text-[#64748b]">AI Creator Studio</p>

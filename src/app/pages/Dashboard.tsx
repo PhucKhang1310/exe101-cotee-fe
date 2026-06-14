@@ -1,6 +1,8 @@
-import { type FormEvent, type KeyboardEvent, type PointerEvent, type WheelEvent, useEffect, useRef, useState } from 'react';
+import { type FormEvent, type KeyboardEvent, type PointerEvent, type WheelEvent, useCallback, useEffect, useRef, useState } from 'react';
+import { useLocation } from 'react-router';
 import imgAiContentImage from '../../imports/Group1/34aa2522d02cc0844a881c632b21d1859df4cbc0.png';
 import { createChatCompletion, createImagePrompt, generateImage, type ChatMessage } from '../lib/aiApi';
+import { getCloudinaryBrowseAssets } from '../lib/cloudinaryAssets';
 import { backMockupOptions, frontMockupOptions } from '../lib/cloudinaryMockups';
 
 type DashboardMessage = ChatMessage;
@@ -56,34 +58,197 @@ type CropDragState = {
   maxOffsetY: number;
 };
 
-type SpeechRecognitionResultEventLike = {
-  results: ArrayLike<ArrayLike<{ transcript: string }>>;
-};
-
-type SpeechRecognitionLike = {
-  lang: string;
-  interimResults: boolean;
-  maxAlternatives: number;
-  onresult: ((event: SpeechRecognitionResultEventLike) => void) | null;
-  onerror: (() => void) | null;
-  onend: (() => void) | null;
-  start: () => void;
-};
-
-type SpeechRecognitionConstructor = new () => SpeechRecognitionLike;
-
 const MIN_DESIGN_SIZE = 96;
 const MIN_CROP_SCALE = 1;
 const CROP_MODE_SCALE = 1.15;
 const MAX_CROP_SCALE = 3;
+const STUDIO_HISTORY_KEY = 'cotee_studio_asset_history';
+const STUDIO_CHAT_HISTORY_KEY = 'cotee_studio_chat_history';
+const STUDIO_HISTORY_TTL_MS = 7 * 24 * 60 * 60 * 1000;
+const MAX_STUDIO_HISTORY_ITEMS = 12;
 const clamp = (value: number, min: number, max: number) => Math.min(Math.max(value, min), max);
 const getCropBounds = (scale: number, width: number, height: number) => ({
   x: Math.max(0, ((scale - 1) * width) / 2),
   y: Math.max(0, ((scale - 1) * height) / 2),
 });
+const downloadImage = (href: string, filename: string) => {
+  const link = document.createElement('a');
+  link.href = href;
+  link.download = filename;
+  link.click();
+};
+
+const loadExportImage = (src: string) =>
+  new Promise<HTMLImageElement>((resolve, reject) => {
+    const image = new Image();
+    image.crossOrigin = 'anonymous';
+    image.onload = () => resolve(image);
+    image.onerror = reject;
+    image.src = src;
+  });
+const getObjectCoverRect = (
+  sourceWidth: number,
+  sourceHeight: number,
+  targetWidth: number,
+  targetHeight: number,
+) => {
+  const scale = Math.max(targetWidth / sourceWidth, targetHeight / sourceHeight);
+  const width = sourceWidth * scale;
+  const height = sourceHeight * scale;
+
+  return {
+    x: (targetWidth - width) / 2,
+    y: (targetHeight - height) / 2,
+    width,
+    height,
+  };
+};
+
+type StudioHistoryItem = {
+  id: string;
+  kind: 'shirt' | 'design';
+  label: string;
+  src: string;
+  backSrc?: string;
+  createdAt: number;
+  expiresAt: number;
+};
+
+type ChatSession = {
+  id: string;
+  title: string;
+  messages: DashboardMessage[];
+  createdAt: number;
+  updatedAt: number;
+  expiresAt: number;
+};
+
+const defaultDashboardMessages: DashboardMessage[] = [
+  {
+    role: 'assistant',
+    content: "Hello! I've loaded your workspace. What kind of design should we apply to the T-shirt today?"
+  }
+];
+
+function getStudioHistory(): StudioHistoryItem[] {
+  const now = Date.now();
+  const parsed = JSON.parse(window.localStorage.getItem(STUDIO_HISTORY_KEY) ?? '[]');
+  if (!Array.isArray(parsed)) return [];
+
+  const history = parsed
+    .filter((item): item is StudioHistoryItem =>
+      item &&
+      typeof item.id === 'string' &&
+      (item.kind === 'shirt' || item.kind === 'design') &&
+      typeof item.label === 'string' &&
+      typeof item.src === 'string' &&
+      typeof item.createdAt === 'number' &&
+      typeof item.expiresAt === 'number' &&
+      item.expiresAt > now,
+    )
+    .sort((first, second) => second.createdAt - first.createdAt);
+
+  if (history.length !== parsed.length) {
+    window.localStorage.setItem(STUDIO_HISTORY_KEY, JSON.stringify(history));
+  }
+
+  return history;
+}
+
+function getValidChatMessages(messages: unknown): DashboardMessage[] {
+  if (!Array.isArray(messages)) return [];
+
+  return messages.filter((message): message is DashboardMessage =>
+    message &&
+    (message.role === 'assistant' || message.role === 'user' || message.role === 'system') &&
+    typeof message.content === 'string',
+  );
+}
+
+function getChatSessionTitle(messages: DashboardMessage[]) {
+  const firstUserMessage = messages.find((message) => message.role === 'user')?.content.trim();
+  const title = firstUserMessage || 'New chat';
+  return title.length > 42 ? `${title.slice(0, 39)}...` : title;
+}
+
+function createChatSession(messages = defaultDashboardMessages): ChatSession {
+  const now = Date.now();
+  return {
+    id: `chat-${now}-${Math.random().toString(36).slice(2, 8)}`,
+    title: getChatSessionTitle(messages),
+    messages,
+    createdAt: now,
+    updatedAt: now,
+    expiresAt: now + STUDIO_HISTORY_TTL_MS,
+  };
+}
+
+function getStoredChatSessions(): ChatSession[] {
+  const now = Date.now();
+  const parsed = JSON.parse(window.localStorage.getItem(STUDIO_CHAT_HISTORY_KEY) ?? 'null');
+  const sourceSessions = Array.isArray(parsed) ? parsed : parsed && Array.isArray(parsed.messages) ? [parsed] : [];
+
+  const sessions = sourceSessions
+    .map((session): ChatSession | null => {
+      const messages = getValidChatMessages(session.messages);
+      const updatedAt = typeof session.updatedAt === 'number' ? session.updatedAt : now;
+      const createdAt = typeof session.createdAt === 'number' ? session.createdAt : updatedAt;
+      const expiresAt = typeof session.expiresAt === 'number' ? session.expiresAt : 0;
+
+      if (messages.length === 0 || expiresAt <= now) return null;
+
+      return {
+        id: typeof session.id === 'string' ? session.id : `chat-${createdAt}`,
+        title: typeof session.title === 'string' ? session.title : getChatSessionTitle(messages),
+        messages,
+        createdAt,
+        updatedAt,
+        expiresAt,
+      };
+    })
+    .filter((session): session is ChatSession => Boolean(session))
+    .sort((first, second) => second.updatedAt - first.updatedAt);
+
+  if (sessions.length === 0) {
+    const newSession = createChatSession();
+    window.localStorage.setItem(STUDIO_CHAT_HISTORY_KEY, JSON.stringify([newSession]));
+    return [newSession];
+  }
+
+  window.localStorage.setItem(STUDIO_CHAT_HISTORY_KEY, JSON.stringify(sessions));
+  return sessions;
+}
+
+function saveStoredChatSessions(sessions: ChatSession[]) {
+  window.localStorage.setItem(STUDIO_CHAT_HISTORY_KEY, JSON.stringify(sessions));
+}
+
+function getInitialChatState() {
+  const sessions = getStoredChatSessions();
+  return {
+    sessions,
+    activeSessionId: sessions[0]?.id ?? '',
+  };
+}
+
+function saveStudioHistory(history: StudioHistoryItem[]) {
+  window.localStorage.setItem(STUDIO_HISTORY_KEY, JSON.stringify(history));
+}
+
+function createStudioHistoryItem(
+  item: Omit<StudioHistoryItem, 'createdAt' | 'expiresAt'>,
+): StudioHistoryItem {
+  const createdAt = Date.now();
+  return {
+    ...item,
+    createdAt,
+    expiresAt: createdAt + STUDIO_HISTORY_TTL_MS,
+  };
+}
 export default function Dashboard() {
+  const location = useLocation();
+  const initialChatStateRef = useRef(getInitialChatState());
   const promptRef = useRef<HTMLTextAreaElement>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
   const shouldRefocusPromptRef = useRef(false);
   const canvasRef = useRef<HTMLDivElement>(null);
   const designBoxRef = useRef<HTMLDivElement>(null);
@@ -91,12 +256,8 @@ export default function Dashboard() {
   const resizeStateRef = useRef<ResizeState | null>(null);
   const cropDragStateRef = useRef<CropDragState | null>(null);
   const [prompt, setPrompt] = useState('');
-  const [messages, setMessages] = useState<DashboardMessage[]>([
-    {
-      role: 'assistant',
-      content: "Hello! I've loaded your workspace. What kind of design should we apply to the T-shirt today?"
-    }
-  ]);
+  const [chatSessions, setChatSessions] = useState<ChatSession[]>(() => initialChatStateRef.current.sessions);
+  const [activeChatSessionId, setActiveChatSessionId] = useState(() => initialChatStateRef.current.activeSessionId);
   const [generatedImageSrc, setGeneratedImageSrc] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isGeneratingImage, setIsGeneratingImage] = useState(false);
@@ -109,9 +270,138 @@ export default function Dashboard() {
   const [cropScale, setCropScale] = useState(MIN_CROP_SCALE);
   const [mockupSide, setMockupSide] = useState<'front' | 'back'>('front');
   const [studioNotice, setStudioNotice] = useState('');
-  const [isListening, setIsListening] = useState(false);
+  const [studioHistory, setStudioHistory] = useState<StudioHistoryItem[]>(() => getStudioHistory());
+  const [isExportMenuOpen, setIsExportMenuOpen] = useState(false);
 
-  const activeMockupOptions = mockupSide === 'front' ? frontMockupOptions : backMockupOptions;
+  const shirtHistory = studioHistory.filter((item) => item.kind === 'shirt');
+  const designHistory = studioHistory.filter((item) => item.kind === 'design');
+  const activeChatSession = chatSessions.find((session) => session.id === activeChatSessionId) ?? chatSessions[0];
+  const messages = activeChatSession?.messages ?? defaultDashboardMessages;
+  const selectedShirtHistoryItem = shirtHistory.find(
+    (item) => item.src === selectedMockupSrc || item.backSrc === selectedMockupSrc,
+  );
+
+  const addStudioHistoryItem = useCallback((item: Omit<StudioHistoryItem, 'createdAt' | 'expiresAt'>) => {
+    setStudioHistory(() => {
+      const currentHistory = getStudioHistory();
+      const nextItem = createStudioHistoryItem(item);
+      const sameKindHistory = [
+        nextItem,
+        ...currentHistory.filter((historyItem) => historyItem.kind === nextItem.kind && historyItem.id !== nextItem.id),
+      ].slice(0, MAX_STUDIO_HISTORY_ITEMS);
+      const nextHistory = [
+        ...sameKindHistory,
+        ...currentHistory.filter((historyItem) => historyItem.kind !== nextItem.kind),
+      ]
+        .sort((first, second) => second.createdAt - first.createdAt);
+
+      saveStudioHistory(nextHistory);
+      return nextHistory;
+    });
+  }, []);
+
+  const resetDesignPlacement = useCallback(() => {
+    dragStateRef.current = null;
+    resizeStateRef.current = null;
+    cropDragStateRef.current = null;
+    setDesignOffset({ x: 0, y: 0 });
+    setDesignSize(null);
+    setCropOffset({ x: 0, y: 0 });
+    setCropScale(MIN_CROP_SCALE);
+    setIsCropMode(false);
+    setIsDesignSelected(true);
+  }, []);
+
+  const selectHistoryItem = (item: StudioHistoryItem) => {
+    if (item.kind === 'shirt') {
+      setSelectedMockupSrc(mockupSide === 'back' && item.backSrc ? item.backSrc : item.src);
+      addStudioHistoryItem(item);
+      setStudioNotice(`${item.label} loaded from history.`);
+      return;
+    }
+
+    setGeneratedImageSrc(item.src);
+    resetDesignPlacement();
+    addStudioHistoryItem(item);
+    setStudioNotice(`${item.label} loaded from history.`);
+  };
+
+  const updateActiveChatMessages = (nextMessages: DashboardMessage[] | ((current: DashboardMessage[]) => DashboardMessage[])) => {
+    setChatSessions((currentSessions) => {
+      const now = Date.now();
+      const targetSessionId = activeChatSession?.id ?? currentSessions[0]?.id;
+      const nextSessions = currentSessions.map((session) => {
+        if (session.id !== targetSessionId) return session;
+
+        const resolvedMessages = typeof nextMessages === 'function' ? nextMessages(session.messages) : nextMessages;
+        return {
+          ...session,
+          title: getChatSessionTitle(resolvedMessages),
+          messages: resolvedMessages,
+          updatedAt: now,
+          expiresAt: now + STUDIO_HISTORY_TTL_MS,
+        };
+      }).sort((first, second) => second.updatedAt - first.updatedAt);
+
+      saveStoredChatSessions(nextSessions);
+      return nextSessions;
+    });
+  };
+
+  const handleNewChatSession = () => {
+    const newSession = createChatSession();
+    setChatSessions((currentSessions) => {
+      const nextSessions = [newSession, ...currentSessions];
+      saveStoredChatSessions(nextSessions);
+      return nextSessions;
+    });
+    setActiveChatSessionId(newSession.id);
+    setPrompt('');
+  };
+
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const shirtId = params.get('shirt');
+    if (!shirtId) return;
+
+    const selectedShirt = getCloudinaryBrowseAssets().find((item) => item.kind === 'shirt' && item.id === shirtId);
+    if (!selectedShirt) {
+      const fallbackOptions = mockupSide === 'front' ? frontMockupOptions : backMockupOptions;
+      setSelectedMockupSrc(fallbackOptions[0]?.src ?? '');
+      return;
+    }
+
+    setSelectedMockupSrc(mockupSide === 'back' && selectedShirt.backImageUrl ? selectedShirt.backImageUrl : selectedShirt.imageUrl);
+    addStudioHistoryItem({
+      id: selectedShirt.id,
+      kind: 'shirt',
+      label: selectedShirt.name,
+      src: selectedShirt.imageUrl,
+      backSrc: selectedShirt.backImageUrl,
+    });
+  }, [addStudioHistoryItem, location.search, mockupSide]);
+
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const designId = params.get('design');
+    if (!designId) return;
+
+    const selectedDesign = getCloudinaryBrowseAssets().find((item) => item.kind === 'design' && item.id === designId);
+    if (!selectedDesign) {
+      setGeneratedImageSrc(null);
+      return;
+    }
+
+    setGeneratedImageSrc(selectedDesign.imageUrl);
+    resetDesignPlacement();
+    addStudioHistoryItem({
+      id: selectedDesign.id,
+      kind: 'design',
+      label: selectedDesign.name,
+      src: selectedDesign.imageUrl,
+    });
+    setStudioNotice(`${selectedDesign.name} loaded from Browse.`);
+  }, [addStudioHistoryItem, location.search, resetDesignPlacement]);
 
   const handleSendMessage = async (e: FormEvent) => {
     e.preventDefault();
@@ -119,19 +409,19 @@ export default function Dashboard() {
     if (!trimmedPrompt || isSubmitting) return;
 
     const nextMessages: DashboardMessage[] = [...messages, { role: 'user', content: trimmedPrompt }];
-    setMessages(nextMessages);
+    updateActiveChatMessages(nextMessages);
     setPrompt('');
     setIsSubmitting(true);
 
     try {
       const assistantContent = await createChatCompletion(nextMessages);
-      setMessages(prev => [...prev, {
+      updateActiveChatMessages(prev => [...prev, {
         role: 'assistant',
         content: assistantContent
       }]);
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Unknown API error';
-      setMessages(prev => [...prev, {
+      updateActiveChatMessages(prev => [...prev, {
         role: 'assistant',
         content: `Sorry, I couldn't finish that request. ${message}`
       }]);
@@ -144,21 +434,17 @@ export default function Dashboard() {
 
   const handleMockupSideChange = (side: 'front' | 'back') => {
     setMockupSide(side);
-    const nextOptions = side === 'front' ? frontMockupOptions : backMockupOptions;
-    setSelectedMockupSrc(nextOptions[0]?.src ?? '');
+    if (selectedShirtHistoryItem) {
+      setSelectedMockupSrc(side === 'back' && selectedShirtHistoryItem.backSrc ? selectedShirtHistoryItem.backSrc : selectedShirtHistoryItem.src);
+    } else {
+      const nextOptions = side === 'front' ? frontMockupOptions : backMockupOptions;
+      setSelectedMockupSrc(nextOptions[0]?.src ?? '');
+    }
     setStudioNotice(`Switched to ${side} mockups.`);
   };
 
   const handleResetDesign = () => {
-    dragStateRef.current = null;
-    resizeStateRef.current = null;
-    cropDragStateRef.current = null;
-    setDesignOffset({ x: 0, y: 0 });
-    setDesignSize(null);
-    setCropOffset({ x: 0, y: 0 });
-    setCropScale(MIN_CROP_SCALE);
-    setIsCropMode(false);
-    setIsDesignSelected(true);
+    resetDesignPlacement();
     setStudioNotice('Design placement reset.');
   };
 
@@ -176,63 +462,85 @@ export default function Dashboard() {
     setStudioNotice('Design size increased.');
   };
 
-  const handleAttachImage = () => {
-    fileInputRef.current?.click();
-  };
-
-  const handleAttachedImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    const reader = new FileReader();
-    reader.onload = () => {
-      if (typeof reader.result !== 'string') return;
-      setGeneratedImageSrc(reader.result);
-      handleResetDesign();
-      setStudioNotice(`${file.name} added to the mockup.`);
-    };
-    reader.readAsDataURL(file);
-    e.target.value = '';
-  };
-
-  const handleVoicePrompt = () => {
-    const SpeechRecognition =
-      (window as typeof window & { SpeechRecognition?: SpeechRecognitionConstructor }).SpeechRecognition ??
-      (window as typeof window & { webkitSpeechRecognition?: SpeechRecognitionConstructor }).webkitSpeechRecognition;
-
-    if (!SpeechRecognition) {
-      setStudioNotice('Voice input is not supported in this browser.');
-      return;
-    }
-
-    const recognition = new SpeechRecognition();
-    recognition.lang = 'en-US';
-    recognition.interimResults = false;
-    recognition.maxAlternatives = 1;
-    setIsListening(true);
-    setStudioNotice('Listening...');
-    recognition.onresult = (event) => {
-      const transcript = event.results[0]?.[0]?.transcript?.trim();
-      if (transcript) {
-        setPrompt((current) => [current, transcript].filter(Boolean).join(' '));
-        setStudioNotice('Voice prompt added.');
-      }
-    };
-    recognition.onerror = () => {
-      setStudioNotice('Voice input stopped before a prompt was captured.');
-    };
-    recognition.onend = () => {
-      setIsListening(false);
-    };
-    recognition.start();
+  const handleExportShirt = () => {
+    downloadImage(selectedMockupSrc, 'cotee-shirt.png');
+    setIsExportMenuOpen(false);
   };
 
   const handleExportDesign = () => {
-    const link = document.createElement('a');
-    link.href = designImageSrc;
-    link.download = 'cotee-design.png';
-    link.click();
-    setStudioNotice('Design image export started.');
+    downloadImage(designImageSrc, 'cotee-design.png');
+    setIsExportMenuOpen(false);
+  };
+
+  const handleExportBoth = async () => {
+    const canvasElement = canvasRef.current;
+    const designBox = designBoxRef.current;
+    if (!canvasElement || !designBox || !selectedMockupSrc) return;
+
+    const canvasRect = canvasElement.getBoundingClientRect();
+    const designRect = designBox.getBoundingClientRect();
+    const exportCanvas = document.createElement('canvas');
+    exportCanvas.width = Math.round(canvasRect.width * window.devicePixelRatio);
+    exportCanvas.height = Math.round(canvasRect.height * window.devicePixelRatio);
+
+    const context = exportCanvas.getContext('2d');
+    if (!context) return;
+
+    const [shirtImage, designImage] = await Promise.all([
+      loadExportImage(selectedMockupSrc),
+      loadExportImage(designImageSrc),
+    ]);
+    const scaleX = exportCanvas.width / canvasRect.width;
+    const scaleY = exportCanvas.height / canvasRect.height;
+    const designX = (designRect.left - canvasRect.left) * scaleX;
+    const designY = (designRect.top - canvasRect.top) * scaleY;
+    const designWidth = designRect.width * scaleX;
+    const designHeight = designRect.height * scaleY;
+    const mockupRect = getObjectCoverRect(
+      shirtImage.naturalWidth,
+      shirtImage.naturalHeight,
+      exportCanvas.width,
+      exportCanvas.height,
+    );
+    const designCoverRect = getObjectCoverRect(
+      designImage.naturalWidth,
+      designImage.naturalHeight,
+      designWidth,
+      designHeight,
+    );
+
+    context.fillStyle = '#ffffff';
+    context.fillRect(0, 0, exportCanvas.width, exportCanvas.height);
+    context.globalAlpha = 0.9;
+    context.globalCompositeOperation = 'multiply';
+    context.drawImage(shirtImage, mockupRect.x, mockupRect.y, mockupRect.width, mockupRect.height);
+    context.globalAlpha = 0.75;
+    context.globalCompositeOperation = 'source-over';
+    context.save();
+    context.beginPath();
+    context.rect(designX, designY, designWidth, designHeight);
+    context.clip();
+    context.translate(designX + designWidth / 2 + cropOffset.x * scaleX, designY + designHeight / 2 + cropOffset.y * scaleY);
+    context.scale(cropScale, cropScale);
+    context.drawImage(
+      designImage,
+      -designWidth / 2 + designCoverRect.x,
+      -designHeight / 2 + designCoverRect.y,
+      designCoverRect.width,
+      designCoverRect.height,
+    );
+    context.restore();
+    context.globalAlpha = 1;
+    context.globalCompositeOperation = 'source-over';
+
+    const shadowGradient = context.createLinearGradient(0, 0, exportCanvas.width, exportCanvas.height);
+    shadowGradient.addColorStop(0, 'rgba(0, 0, 0, 0.05)');
+    shadowGradient.addColorStop(1, 'rgba(0, 0, 0, 0)');
+    context.fillStyle = shadowGradient;
+    context.fillRect(0, 0, exportCanvas.width, exportCanvas.height);
+
+    downloadImage(exportCanvas.toDataURL('image/png'), 'cotee-mockup.png');
+    setIsExportMenuOpen(false);
   };
 
   const handleGenerateImage = async () => {
@@ -244,7 +552,7 @@ export default function Dashboard() {
       : messages;
 
     if (trimmedPrompt) {
-      setMessages(nextMessages);
+      updateActiveChatMessages(nextMessages);
       setPrompt('');
     }
 
@@ -255,17 +563,23 @@ export default function Dashboard() {
       const imagePrompt = await createImagePrompt(nextMessages);
       const imageSrc = await generateImage(imagePrompt);
       setGeneratedImageSrc(imageSrc);
+      addStudioHistoryItem({
+        id: `generated-${Date.now()}`,
+        kind: 'design',
+        label: trimmedPrompt || 'Generated design',
+        src: imageSrc,
+      });
       setIsDesignSelected(true);
       setIsCropMode(false);
       setCropOffset({ x: 0, y: 0 });
       setCropScale(MIN_CROP_SCALE);
-      setMessages(prev => [...prev, {
+      updateActiveChatMessages(prev => [...prev, {
         role: 'assistant',
         content: 'Generated the design on the mockup.'
       }]);
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Unknown API error';
-      setMessages(prev => [...prev, {
+      updateActiveChatMessages(prev => [...prev, {
         role: 'assistant',
         content: `Sorry, I couldn't generate the image. ${message}`
       }]);
@@ -534,37 +848,42 @@ export default function Dashboard() {
 
   return (
     <div className="w-full py-8">
-      <div className="max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="mb-6 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-          <div>
-            <div className="mb-3 inline-flex rounded-full border border-[#fed7aa] bg-[#fff7ed] px-4 py-2 text-sm font-bold text-[#ff9429]">
-              AI T-Shirt Studio
-            </div>
-            <h1 className="text-4xl font-bold leading-tight text-[#0f172a]" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
-              Design on a live mockup
-            </h1>
-            <p className="mt-2 max-w-2xl text-[#64748b]">
-              Chat through a concept, generate artwork, then position it directly on the shirt.
-            </p>
-          </div>
-          <div className="rounded-xl border border-[#e2e8f0] bg-white px-4 py-3 text-sm font-semibold text-[#475569] shadow-sm">
-            Double-click artwork to crop
-          </div>
-        </div>
-
-        <div className="grid min-h-[760px] grid-cols-1 overflow-hidden rounded-2xl border border-[#e2e8f0] bg-white shadow-xl shadow-slate-200/60 lg:grid-cols-[360px_minmax(0,1fr)]">
+      <div className="mx-auto w-full max-w-[1840px] px-4 sm:px-6 lg:px-8">
+        <div className="grid min-h-[760px] grid-cols-1 rounded-2xl border border-[#e2e8f0] bg-white shadow-xl shadow-slate-200/60 lg:h-[calc(100vh-8rem)] lg:min-h-[760px] lg:grid-cols-[360px_minmax(0,1fr)] xl:grid-cols-[420px_minmax(0,1fr)]">
       {/* Left Sidebar - AI Chat */}
-      <div className="bg-white border-b border-[#e2e8f0] flex min-h-[620px] flex-col lg:border-b-0 lg:border-r">
+      <div className="bg-white border-b border-[#e2e8f0] flex min-h-[620px] min-w-0 flex-col overflow-hidden rounded-l-2xl lg:min-h-0 lg:border-b-0 lg:border-r">
         {/* Chat Header */}
         <div className="bg-[#fffaf5] border-b border-[#fed7aa] px-5 py-5">
-          <h2 className="text-sm font-bold text-[#0f172a] uppercase tracking-wide">
-            AI Design Assistant
-          </h2>
-          <p className="mt-1 text-sm text-[#64748b]">Refine the design before generating artwork.</p>
+          <div className="flex items-center justify-between gap-3">
+            <h2 className="text-sm font-bold text-[#0f172a] uppercase tracking-wide">
+              AI Design Assistant
+            </h2>
+            <button
+              type="button"
+              onClick={handleNewChatSession}
+              className="rounded-lg bg-[#ff9429] px-3 py-2 text-xs font-bold text-white transition-colors hover:bg-[#ff8c1a]"
+            >
+              New
+            </button>
+          </div>
+          <select
+            value={activeChatSession?.id ?? ''}
+            onChange={(event) => {
+              setActiveChatSessionId(event.target.value);
+              setPrompt('');
+            }}
+            className="mt-3 w-full rounded-lg border border-[#fed7aa] bg-white px-3 py-2 text-sm font-semibold text-[#475569] focus:border-[#ffa62b] focus:outline-none"
+          >
+            {chatSessions.map((session) => (
+              <option key={session.id} value={session.id}>
+                {session.title}
+              </option>
+            ))}
+          </select>
         </div>
 
         {/* Messages */}
-        <div className="flex-1 overflow-y-auto bg-[#f8f7f5] p-5 space-y-6">
+        <div className="min-h-0 flex-1 space-y-6 overflow-y-auto bg-[#f8f7f5] p-5 [scrollbar-color:#cbd5e1_transparent] [scrollbar-width:thin] [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-[#cbd5e1] [&::-webkit-scrollbar-track]:bg-transparent">
           {messages.map((message, i) => (
             <div key={i} className={`flex gap-3 ${message.role === 'user' ? 'flex-row-reverse' : ''}`}>
               {message.role === 'assistant' ? (
@@ -608,14 +927,7 @@ export default function Dashboard() {
         </div>
 
         {/* Input */}
-        <div className="bg-white border-t border-[#e2e8f0] p-5 space-y-3">
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept="image/png,image/jpeg,image/webp"
-            className="hidden"
-            onChange={handleAttachedImageChange}
-          />
+        <div className="shrink-0 bg-white border-t border-[#e2e8f0] p-5 space-y-3">
           <form onSubmit={handleSendMessage} className="relative">
             <textarea
               ref={promptRef}
@@ -652,43 +964,14 @@ export default function Dashboard() {
               </svg>
             </button>
           </form>
-          <div className="flex gap-4 text-xs">
-            <button
-              type="button"
-              onClick={handleAttachImage}
-              className="flex items-center gap-1 text-[#94a3b8] hover:text-[#ff9429]"
-            >
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
-              </svg>
-              <span className="font-bold uppercase">Attach</span>
-            </button>
-            <button
-              type="button"
-              onClick={handleVoicePrompt}
-              className={`flex items-center gap-1 ${isListening ? 'text-[#ff9429]' : 'text-[#94a3b8] hover:text-[#ff9429]'}`}
-            >
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
-              </svg>
-              <span className="font-bold uppercase">{isListening ? 'Listening' : 'Voice'}</span>
-            </button>
-          </div>
-          {studioNotice && (
-            <div className="rounded-lg bg-[#fff7ed] px-3 py-2 text-xs font-semibold text-[#c2410c]">
-              {studioNotice}
-            </div>
-          )}
         </div>
       </div>
 
       {/* Main Canvas Area */}
-      <div className="flex min-w-0 flex-col bg-[#f8f7f5]">
+      <div className="flex min-w-0 flex-col overflow-hidden rounded-r-2xl bg-[#f8f7f5]">
         {/* Toolbar */}
         <div className="bg-white border-b border-[#e2e8f0] px-4 py-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex flex-wrap items-center gap-4">
-            <span className="font-semibold text-[#0f172a]">T-Shirt Mockup v1.2</span>
-            <div className="h-4 w-px bg-[#cbd5e1]" />
             <div className="bg-[#f1f5f9] rounded-lg p-1 flex gap-1">
               <button
                 type="button"
@@ -737,28 +1020,56 @@ export default function Dashboard() {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
               </svg>
             </button>
-            <button
-              type="button"
-              onClick={handleExportDesign}
-              className="px-4 py-2 bg-[#ff9429] text-white rounded-lg hover:bg-[#ff8c1a] transition-colors flex items-center gap-2"
-            >
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-              </svg>
-              <span className="font-bold text-sm">Export</span>
-            </button>
+            <div className="relative">
+              <button
+                type="button"
+                onClick={() => setIsExportMenuOpen((current) => !current)}
+                className="px-4 py-2 bg-[#ff9429] text-white rounded-lg hover:bg-[#ff8c1a] transition-colors flex items-center gap-2"
+                aria-expanded={isExportMenuOpen}
+              >
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                </svg>
+                <span className="font-bold text-sm">Export</span>
+              </button>
+              {isExportMenuOpen && (
+                <div className="absolute right-0 top-full z-30 mt-2 w-44 overflow-hidden rounded-xl border border-[#e2e8f0] bg-white py-2 text-sm font-semibold text-[#0f172a] shadow-xl shadow-slate-300/40">
+                  <button
+                    type="button"
+                    onClick={handleExportShirt}
+                    className="block w-full px-4 py-2 text-left hover:bg-[#fff7ed] hover:text-[#c2410c]"
+                  >
+                    Save shirt
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleExportDesign}
+                    className="block w-full px-4 py-2 text-left hover:bg-[#fff7ed] hover:text-[#c2410c]"
+                  >
+                    Save design
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleExportBoth}
+                    className="block w-full px-4 py-2 text-left hover:bg-[#fff7ed] hover:text-[#c2410c]"
+                  >
+                    Save both
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
         </div>
 
         {/* Canvas */}
         <div
-          className="relative flex-1 flex min-h-[680px] items-center justify-center p-5 pb-32 sm:p-8 lg:p-10 lg:pr-32"
+          className="relative flex-1 flex min-h-[680px] items-center justify-center p-5 pb-32 sm:p-8 lg:min-h-0 lg:p-8 lg:pr-[25rem] xl:pr-[27rem]"
           style={{
             backgroundImage: `linear-gradient(135deg, rgba(255,245,235,0.8), rgba(248,247,245,0.2)), radial-gradient(circle at 50% 50%, rgba(226,232,240,0.95) 0%, rgba(226,232,240,0) 68%)`,
             backgroundSize: 'cover'
           }}
         >
-          <div ref={canvasRef} className="relative aspect-[19/21] w-full max-w-[760px] bg-white rounded-2xl shadow-2xl shadow-slate-300/70 overflow-hidden">
+          <div ref={canvasRef} className="relative aspect-[19/21] h-auto max-h-full w-full max-w-[820px] bg-white rounded-2xl shadow-2xl shadow-slate-300/70 overflow-hidden lg:h-full lg:w-auto">
             {/* Mockup */}
             <div className="absolute inset-0 opacity-90 mix-blend-multiply">
               {selectedMockupSrc ? (
@@ -902,31 +1213,75 @@ export default function Dashboard() {
               }}
             />
           </div>
-          <div className="absolute bottom-5 left-5 right-5 h-24 overflow-x-auto rounded-xl border border-[#e2e8f0] bg-white/90 p-2 shadow-sm backdrop-blur lg:bottom-10 lg:left-auto lg:right-4 lg:top-10 lg:h-auto lg:w-24 lg:overflow-y-auto lg:overflow-x-hidden">
-            <div className="flex gap-2 lg:block lg:space-y-2">
-              {activeMockupOptions.map((mockup) => (
-                <button
-                  key={mockup.id}
-                  type="button"
-                  onClick={() => setSelectedMockupSrc(mockup.src)}
-                  className={`block h-20 w-20 shrink-0 overflow-hidden rounded-lg border-2 bg-white transition-all lg:h-24 lg:w-full ${
-                    selectedMockupSrc === mockup.src
-                      ? 'border-[#ff9429] shadow-md'
-                      : 'border-transparent hover:border-[#cbd5e1]'
-                  }`}
-                  title={mockup.label}
-                >
-                  <img
-                    src={mockup.thumbSrc}
-                    alt={mockup.label}
-                    className="h-full w-full object-cover object-center"
-                    loading="lazy"
-                    decoding="async"
-                    draggable={false}
-                  />
-                </button>
-              ))}
-            </div>
+          <div className="absolute bottom-5 left-5 right-5 flex gap-3 overflow-x-auto lg:bottom-10 lg:left-auto lg:right-56 lg:top-14 lg:w-36 lg:overflow-y-auto lg:overflow-x-hidden">
+              <section className="w-36 shrink-0 rounded-xl border border-[#e2e8f0] bg-white/90 p-3 shadow-sm backdrop-blur">
+                <h3 className="mb-2 text-[10px] font-bold uppercase tracking-wide text-[#94a3b8]">Shirts</h3>
+                {shirtHistory.length > 0 ? (
+                  <div className="flex gap-2 lg:block lg:space-y-2">
+                    {shirtHistory.map((item) => (
+                      <button
+                        key={item.id}
+                        type="button"
+                        onClick={() => selectHistoryItem(item)}
+                        className={`block h-20 w-20 shrink-0 overflow-hidden rounded-lg border-2 bg-white transition-all lg:h-24 lg:w-full ${
+                          selectedMockupSrc === item.src || selectedMockupSrc === item.backSrc
+                            ? 'border-[#ff9429] shadow-md'
+                            : 'border-transparent hover:border-[#cbd5e1]'
+                        }`}
+                        title={item.label}
+                      >
+                        <img
+                          src={mockupSide === 'back' && item.backSrc ? item.backSrc : item.src}
+                          alt={item.label}
+                          className="h-full w-full object-cover object-center"
+                          loading="lazy"
+                          decoding="async"
+                          draggable={false}
+                        />
+                      </button>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="grid h-20 w-full place-items-center rounded-lg border border-dashed border-[#cbd5e1] px-3 text-center text-[11px] font-semibold text-[#94a3b8]">
+                    No shirt history
+                  </div>
+                )}
+              </section>
+          </div>
+          <div className="absolute bottom-5 left-[10.25rem] right-5 flex gap-3 overflow-x-auto lg:bottom-10 lg:left-auto lg:right-8 lg:top-14 lg:w-36 lg:overflow-y-auto lg:overflow-x-hidden">
+              <section className="w-36 shrink-0 rounded-xl border border-[#e2e8f0] bg-white/90 p-3 shadow-sm backdrop-blur">
+                <h3 className="mb-2 text-[10px] font-bold uppercase tracking-wide text-[#94a3b8]">Designs</h3>
+                {designHistory.length > 0 ? (
+                  <div className="flex gap-2 lg:block lg:space-y-2">
+                    {designHistory.map((item) => (
+                      <button
+                        key={item.id}
+                        type="button"
+                        onClick={() => selectHistoryItem(item)}
+                        className={`block h-20 w-20 shrink-0 overflow-hidden rounded-lg border-2 bg-white transition-all lg:h-24 lg:w-full ${
+                          generatedImageSrc === item.src
+                            ? 'border-[#ff9429] shadow-md'
+                            : 'border-transparent hover:border-[#cbd5e1]'
+                        }`}
+                        title={item.label}
+                      >
+                        <img
+                          src={item.src}
+                          alt={item.label}
+                          className="h-full w-full object-contain object-center p-2"
+                          loading="lazy"
+                          decoding="async"
+                          draggable={false}
+                        />
+                      </button>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="grid h-20 w-full place-items-center rounded-lg border border-dashed border-[#cbd5e1] px-3 text-center text-[11px] font-semibold text-[#94a3b8]">
+                    No design history
+                  </div>
+                )}
+              </section>
           </div>
         </div>
       </div>

@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Heart, ImageOff, Palette, Search, Shirt } from 'lucide-react';
+import { Check, Heart, ImageOff, Palette, Search, Shirt, X } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
+import { useNavigate } from 'react-router';
 import { getCloudinaryBrowseAssets, type CloudinaryBrowseAsset } from '../lib/cloudinaryAssets';
 
 type BrowseMode = 'all' | 'shirt' | 'design';
@@ -38,6 +39,7 @@ function filterAndSortItems(items: BrowseItem[], search: string, sort: string) {
 }
 
 export default function Browse() {
+  const navigate = useNavigate();
   const [mode, setMode] = useState<BrowseMode>('all');
   const [items, setItems] = useState<BrowseItem[]>([]);
   const [search, setSearch] = useState('');
@@ -45,6 +47,8 @@ export default function Browse() {
   const [visibleCount, setVisibleCount] = useState(6);
   const [savedItems, setSavedItems] = useState<string[]>([]);
   const [shirtViews, setShirtViews] = useState<Record<string, 'front' | 'back'>>({});
+  const [selectedShirtId, setSelectedShirtId] = useState('');
+  const [selectedDesignId, setSelectedDesignId] = useState('');
 
   useEffect(() => {
     setItems(getCloudinaryBrowseAssets());
@@ -59,6 +63,15 @@ export default function Browse() {
   const filteredDesigns = useMemo(() => filterAndSortItems(designItems, search, sort), [designItems, search, sort]);
 
   const visibleItems = filteredItems.slice(0, visibleCount);
+  const selectedShirt = useMemo(
+    () => shirtItems.find((item) => item.id === selectedShirtId),
+    [selectedShirtId, shirtItems],
+  );
+  const selectedDesign = useMemo(
+    () => designItems.find((item) => item.id === selectedDesignId),
+    [selectedDesignId, designItems],
+  );
+  const hasStudioSelection = Boolean(selectedShirt || selectedDesign);
 
   const toggleSavedItem = (id: string) => {
     setSavedItems((current) =>
@@ -70,16 +83,36 @@ export default function Browse() {
     setShirtViews((current) => ({ ...current, [id]: view }));
   };
 
+  const selectStudioAsset = (item: BrowseItem) => {
+    if (item.kind === 'shirt') {
+      setSelectedShirtId(item.id);
+      return;
+    }
+
+    setSelectedDesignId(item.id);
+  };
+
+  const openStudio = () => {
+    const params = new URLSearchParams();
+    if (selectedShirt) params.set('shirt', selectedShirt.id);
+    if (selectedDesign) params.set('design', selectedDesign.id);
+
+    navigate(`/dashboard${params.size > 0 ? `?${params.toString()}` : ''}`);
+  };
+
   const renderAssetCard = (item: BrowseItem, compact = false) => {
     const isSaved = savedItems.includes(item.id);
     const isDesign = item.kind === 'design';
+    const isSelected = item.kind === 'shirt' ? selectedShirtId === item.id : selectedDesignId === item.id;
     const shirtView = shirtViews[item.id] ?? 'front';
     const imageUrl = item.kind === 'shirt' && shirtView === 'back' && item.backImageUrl ? item.backImageUrl : item.imageUrl;
 
     return (
       <article
         key={item.id}
-        className={`group overflow-hidden rounded-2xl border-2 border-transparent bg-white shadow-sm transition-all hover:border-[#ffa62b] hover:shadow-xl ${
+        className={`group overflow-hidden rounded-2xl border-2 bg-white shadow-sm transition-all hover:border-[#ffa62b] hover:shadow-xl ${
+          isSelected ? 'border-[#ff9429] shadow-lg shadow-orange-100' : 'border-transparent'
+        } ${
           compact ? 'w-[300px] shrink-0 snap-start sm:w-[340px]' : ''
         }`}
       >
@@ -139,13 +172,25 @@ export default function Browse() {
               <Heart className={`h-5 w-5 ${isSaved ? 'fill-current' : ''}`} />
             </button>
           </div>
+          <button
+            type="button"
+            onClick={() => selectStudioAsset(item)}
+            className={`mt-5 flex w-full items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-bold transition-colors ${
+              isSelected
+                ? 'bg-[#ff9429] text-white'
+                : 'border border-[#fed7aa] bg-[#fff7ed] text-[#c2410c] hover:bg-[#ffedd5]'
+            }`}
+          >
+            {isSelected ? <Check className="h-4 w-4" /> : item.kind === 'shirt' ? <Shirt className="h-4 w-4" /> : <Palette className="h-4 w-4" />}
+            {isSelected ? 'Selected for Studio' : `Select ${item.kind === 'shirt' ? 'Shirt' : 'Design'}`}
+          </button>
         </div>
       </article>
     );
   };
 
   return (
-    <div className="w-full py-12">
+    <div className={`w-full py-12 ${hasStudioSelection ? 'pb-40' : ''}`}>
       <div className="max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-8">
         <div className="mb-10">
           <h1 className="text-5xl font-bold text-[#0f172a]" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
@@ -267,6 +312,55 @@ export default function Browse() {
           </div>
         )}
       </div>
+      {hasStudioSelection && (
+        <div className="fixed inset-x-0 bottom-0 z-40 border-t border-[#fed7aa] bg-white/95 shadow-2xl shadow-slate-400/20 backdrop-blur">
+          <div className="mx-auto flex max-w-[1280px] flex-col gap-4 px-4 py-4 sm:px-6 lg:flex-row lg:items-center lg:justify-between lg:px-8">
+            <div className="grid flex-1 gap-3 sm:grid-cols-2">
+              <div className="flex items-center justify-between gap-3 rounded-xl border border-[#e2e8f0] bg-[#f8fafc] px-4 py-3">
+                <div className="min-w-0">
+                  <p className="text-xs font-bold uppercase tracking-wide text-[#94a3b8]">Shirt</p>
+                  <p className="truncate text-sm font-bold text-[#0f172a]">{selectedShirt?.name ?? 'No shirt selected'}</p>
+                </div>
+                {selectedShirt && (
+                  <button
+                    type="button"
+                    onClick={() => setSelectedShirtId('')}
+                    className="rounded-lg p-2 text-[#64748b] transition-colors hover:bg-white hover:text-[#0f172a]"
+                    aria-label="Clear selected shirt"
+                    title="Clear selected shirt"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                )}
+              </div>
+              <div className="flex items-center justify-between gap-3 rounded-xl border border-[#e2e8f0] bg-[#f8fafc] px-4 py-3">
+                <div className="min-w-0">
+                  <p className="text-xs font-bold uppercase tracking-wide text-[#94a3b8]">Design</p>
+                  <p className="truncate text-sm font-bold text-[#0f172a]">{selectedDesign?.name ?? 'No design selected'}</p>
+                </div>
+                {selectedDesign && (
+                  <button
+                    type="button"
+                    onClick={() => setSelectedDesignId('')}
+                    className="rounded-lg p-2 text-[#64748b] transition-colors hover:bg-white hover:text-[#0f172a]"
+                    aria-label="Clear selected design"
+                    title="Clear selected design"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                )}
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={openStudio}
+              className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#ff9429] px-6 py-4 text-sm font-bold text-white shadow-lg shadow-orange-200 transition-colors hover:bg-[#ff8c1a]"
+            >
+              Open Studio
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

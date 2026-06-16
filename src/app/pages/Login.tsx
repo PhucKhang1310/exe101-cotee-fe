@@ -4,16 +4,28 @@ import imgGoogle from '../../imports/Group1/a5ec32389763b208dc6a3392b5de2d215770
 import { login } from '../lib/api';
 import { signInWithToken } from '../lib/store';
 import { getAuthClaims } from '../lib/auth';
+import { redirectToGoogleSignIn } from '../lib/googleAuth';
 
 export default function Login() {
   const [notice, setNotice] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isGoogleSubmitting, setIsGoogleSubmitting] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
   const redirectTo = new URLSearchParams(location.search).get('redirect') || '/';
 
-  const handleGoogleLogin = () => {
-    setNotice('Google login is not connected on the backend yet. Please sign in with email.');
+  const handleGoogleLogin = async () => {
+    if (isGoogleSubmitting) return;
+
+    setIsGoogleSubmitting(true);
+    setNotice('');
+
+    try {
+      await redirectToGoogleSignIn(redirectTo);
+    } catch (error) {
+      setNotice(error instanceof Error ? error.message : 'Unable to sign in with Google. Please try again.');
+      setIsGoogleSubmitting(false);
+    }
   };
 
   const handleLogin = async (e: FormEvent<HTMLFormElement>) => {
@@ -74,11 +86,12 @@ export default function Login() {
           <button
             type="button"
             onClick={handleGoogleLogin}
+            disabled={isGoogleSubmitting}
             className="w-full flex items-center justify-center gap-3 px-6 py-4 bg-white border-2 border-[#e2e8f0] rounded-xl hover:border-[#ffa62b] hover:bg-[#fff5eb] transition-all mb-6 group"
           >
             <img src={imgGoogle} alt="Google" className="w-5 h-5" />
             <span className="font-semibold text-[#475569] group-hover:text-[#0f172a]">
-              Continue with Google
+              {isGoogleSubmitting ? 'Connecting to Google...' : 'Continue with Google'}
             </span>
           </button>
 

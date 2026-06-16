@@ -114,6 +114,13 @@ export async function login(email: string, password: string): Promise<LoginRespo
   });
 }
 
+export async function googleLogin(idToken: string): Promise<LoginResponse> {
+  return request<LoginResponse>('/api/Auth/google-login', {
+    method: 'POST',
+    body: JSON.stringify({ idToken }),
+  });
+}
+
 export async function register(fullName: string, email: string, password: string): Promise<RegisterResponse> {
   return request<RegisterResponse>('/api/Auth/register', {
     method: 'POST',

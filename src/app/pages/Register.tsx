@@ -2,16 +2,28 @@ import { type FormEvent, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router';
 import imgGoogle from '../../imports/Group1/a5ec32389763b208dc6a3392b5de2d21577083ce.png';
 import { register } from '../lib/api';
+import { redirectToGoogleSignIn } from '../lib/googleAuth';
 
 export default function Register() {
   const [notice, setNotice] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isGoogleSubmitting, setIsGoogleSubmitting] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
   const redirectTo = new URLSearchParams(location.search).get('redirect') || '/';
 
-  const handleGoogleSignup = () => {
-    setNotice('Google signup is not connected on the backend yet. Please create an account with email.');
+  const handleGoogleSignup = async () => {
+    if (isGoogleSubmitting) return;
+
+    setIsGoogleSubmitting(true);
+    setNotice('');
+
+    try {
+      await redirectToGoogleSignIn(redirectTo);
+    } catch (error) {
+      setNotice(error instanceof Error ? error.message : 'Unable to sign up with Google. Please try again.');
+      setIsGoogleSubmitting(false);
+    }
   };
 
   const handleRegister = async (e: FormEvent<HTMLFormElement>) => {
@@ -74,11 +86,12 @@ export default function Register() {
           <button
             type="button"
             onClick={handleGoogleSignup}
+            disabled={isGoogleSubmitting}
             className="w-full flex items-center justify-center gap-3 px-6 py-4 bg-white border-2 border-[#e2e8f0] rounded-xl hover:border-[#ffa62b] hover:bg-[#fff5eb] transition-all mb-6 group"
           >
             <img src={imgGoogle} alt="Google" className="w-5 h-5" />
             <span className="font-semibold text-[#475569] group-hover:text-[#0f172a]">
-              Sign up with Google
+              {isGoogleSubmitting ? 'Connecting to Google...' : 'Sign up with Google'}
             </span>
           </button>
 

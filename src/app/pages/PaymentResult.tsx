@@ -31,8 +31,8 @@ export default function PaymentResult() {
             </p>
           )}
           <div className="mt-7 grid gap-3 sm:grid-cols-2">
-            <Link to="/cart" className="rounded-xl border border-[#e2e8f0] px-5 py-3 font-bold text-[#0f172a] hover:border-[#ffa62b]">
-              View Cart
+            <Link to="/orders" className="rounded-xl border border-[#e2e8f0] px-5 py-3 font-bold text-[#0f172a] hover:border-[#ffa62b]">
+              View Orders
             </Link>
             <Link to="/browse" className="rounded-xl bg-[#ff9429] px-5 py-3 font-bold text-white hover:bg-[#ff8c1a]">
               Continue Shopping

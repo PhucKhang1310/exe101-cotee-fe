@@ -82,6 +82,17 @@ export default function Layout({ children }: { children: React.ReactNode }) {
               {authUser ? (
                 <>
                   <Link
+                    to="/orders"
+                    className={`px-4 py-2 text-sm font-bold rounded-lg transition-colors ${
+                      location.pathname === '/orders'
+                        ? 'bg-[rgba(255,148,41,0.1)] text-[#ff9429]'
+                        : 'text-[#475569] hover:bg-[#f1f5f9]'
+                    }`}
+                    style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}
+                  >
+                    My Orders
+                  </Link>
+                  <Link
                     to="/cart"
                     className={`px-4 py-2 text-sm font-bold rounded-lg transition-colors ${
                       location.pathname === '/cart'
@@ -141,6 +152,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                 <li><Link to="/features" className="hover:text-[#ff9429]">Features</Link></li>
                 <li><Link to="/browse" className="hover:text-[#ff9429]">Browse</Link></li>
                 <li><Link to="/dashboard" className="hover:text-[#ff9429]">AI T-Shirt Studio</Link></li>
+                <li><Link to="/orders" className="hover:text-[#ff9429]">My Orders</Link></li>
                 <li><Link to="/cart" className="hover:text-[#ff9429]">Cart</Link></li>
               </ul>
             </div>

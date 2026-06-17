@@ -57,6 +57,30 @@ export type CheckoutResponse = {
   totalAmount: number;
 };
 
+export type ApiOrderItem = {
+  productId: string;
+  name: string;
+  priceAtPurchase: number;
+  quantity: number;
+  size: string;
+};
+
+export type ApiOrder = {
+  id: string;
+  userId: string;
+  orderCode: string;
+  shippingDetails: {
+    fullName: string;
+    phone: string;
+    address: string;
+  };
+  items: ApiOrderItem[];
+  totalAmount: number;
+  paymentStatus: string;
+  orderStatus: string;
+  createdAt: string;
+};
+
 export function getAuthToken(): string {
   return window.localStorage.getItem(TOKEN_KEY) ?? '';
 }
@@ -151,6 +175,13 @@ export async function getProduct(id: string): Promise<ApiProduct> {
   return request<ApiProduct>(`/api/Products/${encodeURIComponent(id)}`);
 }
 
+export async function createProduct(name: string, price: number, stock: number, imageUrl?: string): Promise<ApiProduct> {
+  return request<ApiProduct>('/api/Products', {
+    method: 'POST',
+    body: JSON.stringify({ name, price, stock, imageUrl }),
+  });
+}
+
 export async function getCart(): Promise<ApiCartItem[]> {
   return request<ApiCartItem[]>('/api/Carts');
 }
@@ -184,4 +215,12 @@ export async function checkout(fullName: string, phone: string, address: string)
     method: 'POST',
     body: JSON.stringify({ fullName, phone, address }),
   });
+}
+
+export async function getMyOrders(): Promise<ApiOrder[]> {
+  return request<ApiOrder[]>('/api/Orders/my-orders');
+}
+
+export async function cancelOrder(orderCode: string): Promise<ApiOrder> {
+  return request<ApiOrder>(`/api/Orders/${encodeURIComponent(orderCode)}/cancel`, { method: 'POST' });
 }

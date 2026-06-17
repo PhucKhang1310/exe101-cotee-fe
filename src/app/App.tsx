@@ -12,6 +12,7 @@ import Dashboard from './pages/Dashboard';
 import Product from './pages/Product';
 import Cart from './pages/Cart';
 import PaymentResult from './pages/PaymentResult';
+import Orders from './pages/Orders';
 import RequireAuth from './components/RequireAuth';
 import AdminLayout from './components/admin/AdminLayout';
 import AdminDashboard from './pages/admin/AdminDashboard';
@@ -49,6 +50,14 @@ export default function App() {
                 />
                 <Route path="/product/:id" element={<Product />} />
                 <Route path="/cart" element={<Cart />} />
+                <Route
+                  path="/orders"
+                  element={
+                    <RequireAuth>
+                      <Orders />
+                    </RequireAuth>
+                  }
+                />
                 <Route path="/login" element={<Login />} />
                 <Route path="/register" element={<Register />} />
                 <Route path="/auth/google/callback" element={<GoogleAuthCallback />} />

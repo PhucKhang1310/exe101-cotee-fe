@@ -19,7 +19,7 @@ function mapApiCartItem(item: ApiCartItem): CartItem {
     name: item.productName,
     category: 'CoTee Product',
     price: item.price,
-    image: getTeeProductImage(item.productId),
+    image: item.imageUrl || getTeeProductImage(item.productId),
     size: item.size,
     color: '#ff9429',
     quantity: item.quantity,

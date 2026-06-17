@@ -1,9 +1,13 @@
 import { type FormEvent, type KeyboardEvent, type PointerEvent, type WheelEvent, useCallback, useEffect, useRef, useState } from 'react';
-import { useLocation } from 'react-router';
+import { Minus, Plus, ShoppingBag } from 'lucide-react';
+import { useLocation, useNavigate } from 'react-router';
 import imgAiContentImage from '../../imports/Group1/34aa2522d02cc0844a881c632b21d1859df4cbc0.png';
+import { addCartItem as addApiCartItem, createProduct } from '../lib/api';
 import { createChatCompletion, createImagePrompt, generateImage, type ChatMessage } from '../lib/aiApi';
 import { getCloudinaryBrowseAssets } from '../lib/cloudinaryAssets';
 import { backMockupOptions, frontMockupOptions } from '../lib/cloudinaryMockups';
+import { formatVnd } from '../lib/commerce';
+import { addCartItem as addLocalCartItem, isAuthenticated } from '../lib/store';
 
 type DashboardMessage = ChatMessage;
 
@@ -66,6 +70,9 @@ const STUDIO_HISTORY_KEY = 'cotee_studio_asset_history';
 const STUDIO_CHAT_HISTORY_KEY = 'cotee_studio_chat_history';
 const STUDIO_HISTORY_TTL_MS = 7 * 24 * 60 * 60 * 1000;
 const MAX_STUDIO_HISTORY_ITEMS = 12;
+const CUSTOM_TEE_PRICE = 249000;
+const CUSTOM_TEE_STOCK = 99;
+const sizes = ['XS', 'S', 'M', 'L', 'XL', '2XL'];
 const clamp = (value: number, min: number, max: number) => Math.min(Math.max(value, min), max);
 const getCropBounds = (scale: number, width: number, height: number) => ({
   x: Math.max(0, ((scale - 1) * width) / 2),
@@ -247,6 +254,7 @@ function createStudioHistoryItem(
 }
 export default function Dashboard() {
   const location = useLocation();
+  const navigate = useNavigate();
   const initialChatStateRef = useRef(getInitialChatState());
   const promptRef = useRef<HTMLTextAreaElement>(null);
   const shouldRefocusPromptRef = useRef(false);
@@ -269,9 +277,12 @@ export default function Dashboard() {
   const [cropOffset, setCropOffset] = useState({ x: 0, y: 0 });
   const [cropScale, setCropScale] = useState(MIN_CROP_SCALE);
   const [mockupSide, setMockupSide] = useState<'front' | 'back'>('front');
+  const [selectedSize, setSelectedSize] = useState('M');
+  const [quantity, setQuantity] = useState(1);
   const [studioNotice, setStudioNotice] = useState('');
   const [studioHistory, setStudioHistory] = useState<StudioHistoryItem[]>(() => getStudioHistory());
   const [isExportMenuOpen, setIsExportMenuOpen] = useState(false);
+  const [isAddingToCart, setIsAddingToCart] = useState(false);
 
   const shirtHistory = studioHistory.filter((item) => item.kind === 'shirt');
   const designHistory = studioHistory.filter((item) => item.kind === 'design');
@@ -472,10 +483,12 @@ export default function Dashboard() {
     setIsExportMenuOpen(false);
   };
 
-  const handleExportBoth = async () => {
+  const createComposedMockupImage = async () => {
     const canvasElement = canvasRef.current;
     const designBox = designBoxRef.current;
-    if (!canvasElement || !designBox || !selectedMockupSrc) return;
+    if (!canvasElement || !designBox || !selectedMockupSrc) {
+      throw new Error('The current shirt design is not ready yet.');
+    }
 
     const canvasRect = canvasElement.getBoundingClientRect();
     const designRect = designBox.getBoundingClientRect();
@@ -539,8 +552,48 @@ export default function Dashboard() {
     context.fillStyle = shadowGradient;
     context.fillRect(0, 0, exportCanvas.width, exportCanvas.height);
 
-    downloadImage(exportCanvas.toDataURL('image/png'), 'cotee-mockup.png');
+    return exportCanvas.toDataURL('image/png');
+  };
+
+  const handleExportBoth = async () => {
+    const mockupImage = await createComposedMockupImage();
+    downloadImage(mockupImage, 'cotee-mockup.png');
     setIsExportMenuOpen(false);
+  };
+
+  const handleAddToCart = async () => {
+    if (isAddingToCart) return;
+
+    if (!isAuthenticated()) {
+      navigate(`/login?redirect=${encodeURIComponent('/dashboard')}`);
+      return;
+    }
+
+    setIsAddingToCart(true);
+    setStudioNotice('');
+
+    try {
+      const imageUrl = await createComposedMockupImage();
+      const product = await createProduct('Custom AI Studio T-shirt', CUSTOM_TEE_PRICE, CUSTOM_TEE_STOCK, imageUrl);
+      await addApiCartItem(product.id, quantity, selectedSize);
+      addLocalCartItem({
+        id: `${product.id}-${selectedSize}`,
+        productId: product.id,
+        name: product.name,
+        category: 'Custom AI Studio Design',
+        price: product.price,
+        image: imageUrl,
+        size: selectedSize,
+        color: '#ff9429',
+        quantity,
+      });
+      setStudioNotice(`${quantity} custom T-shirt${quantity > 1 ? 's' : ''} added to cart.`);
+      navigate('/cart');
+    } catch (error) {
+      setStudioNotice(error instanceof Error ? error.message : 'Unable to add this custom T-shirt to cart.');
+    } finally {
+      setIsAddingToCart(false);
+    }
   };
 
   const handleGenerateImage = async () => {
@@ -1019,6 +1072,47 @@ export default function Dashboard() {
               <svg className="w-5 h-5 text-[#64748b]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
               </svg>
+            </button>
+            <select
+              value={selectedSize}
+              onChange={(event) => setSelectedSize(event.target.value)}
+              className="h-10 rounded-lg border border-[#e2e8f0] bg-white px-3 text-sm font-bold text-[#0f172a] focus:border-[#ffa62b] focus:outline-none"
+              aria-label="Select shirt size"
+            >
+              {sizes.map((size) => (
+                <option key={size} value={size}>
+                  {size}
+                </option>
+              ))}
+            </select>
+            <div className="inline-grid h-10 grid-cols-[36px_42px_36px] overflow-hidden rounded-lg border border-[#e2e8f0] bg-white">
+              <button
+                type="button"
+                onClick={() => setQuantity((current) => Math.max(1, current - 1))}
+                className="grid place-items-center text-[#64748b] hover:bg-[#f8f7f5]"
+                aria-label="Decrease quantity"
+              >
+                <Minus className="h-4 w-4" />
+              </button>
+              <div className="grid place-items-center border-x border-[#e2e8f0] text-sm font-bold text-[#0f172a]">{quantity}</div>
+              <button
+                type="button"
+                onClick={() => setQuantity((current) => Math.min(9, current + 1))}
+                className="grid place-items-center text-[#64748b] hover:bg-[#f8f7f5]"
+                aria-label="Increase quantity"
+              >
+                <Plus className="h-4 w-4" />
+              </button>
+            </div>
+            <button
+              type="button"
+              onClick={handleAddToCart}
+              disabled={isAddingToCart || isGeneratingImage}
+              className="flex h-10 items-center gap-2 rounded-lg bg-[#0f172a] px-4 text-sm font-bold text-white transition-colors hover:bg-[#1e293b] disabled:cursor-not-allowed disabled:opacity-50"
+              title={`${formatVnd(CUSTOM_TEE_PRICE)} each`}
+            >
+              <ShoppingBag className="h-4 w-4" />
+              <span>{isAddingToCart ? 'Adding...' : 'Add to cart'}</span>
             </button>
             <div className="relative">
               <button

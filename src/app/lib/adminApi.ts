@@ -1,4 +1,4 @@
-import { request, type ApiProduct } from './api';
+import { request, type ApiOrder, type ApiOrderItem, type ApiProduct } from './api';
 
 export type AdminUser = {
   id: string;
@@ -18,29 +18,8 @@ export type PagedUsers = {
   items: AdminUser[];
 };
 
-export type OrderItem = {
-  productId: string;
-  name: string;
-  priceAtPurchase: number;
-  quantity: number;
-  size: string;
-};
-
-export type AdminOrder = {
-  id: string;
-  userId: string;
-  orderCode: string;
-  shippingDetails: {
-    fullName: string;
-    phone: string;
-    address: string;
-  };
-  items: OrderItem[];
-  totalAmount: number;
-  paymentStatus: string;
-  orderStatus: string;
-  createdAt: string;
-};
+export type OrderItem = ApiOrderItem;
+export type AdminOrder = ApiOrder;
 
 export function getAdminUsers(page = 1, pageSize = 100): Promise<PagedUsers> {
   return request(`/api/admin/users?page=${page}&pageSize=${pageSize}`);

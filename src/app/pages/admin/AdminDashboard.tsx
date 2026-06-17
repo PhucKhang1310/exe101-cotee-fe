@@ -54,7 +54,7 @@ export default function AdminDashboard() {
           </div>
         </article>
         <article className="rounded-2xl border bg-white p-5 shadow-sm">
-          <div className="flex justify-between"><div><h2 className="font-extrabold">Order pipeline</h2><p className="text-xs text-slate-400">Fulfillment status</p></div><Link to="/admin/orders" className="text-sm font-bold text-[#ff9429]">Manage</Link></div>
+          <div className="flex justify-between"><div><h2 className="font-extrabold">Order pipeline</h2><p className="text-xs text-slate-400">Order status</p></div><Link to="/admin/orders" className="text-sm font-bold text-[#ff9429]">Manage</Link></div>
           <div className="mt-6 space-y-3">
             {['Pending', 'Processing', 'Shipping', 'Completed'].map((status) => {
               const count = orders.filter((order) => order.orderStatus === status).length;

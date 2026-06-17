@@ -96,7 +96,7 @@ export default function Orders() {
               Track Your Orders
             </h1>
             <p className="mt-3 max-w-2xl text-[#64748b]">
-              Follow payment and fulfillment updates for every CoTee order from your account.
+              Follow payment and status updates for every CoTee order from your account.
             </p>
           </div>
           <Link to="/browse" className="inline-flex items-center justify-center rounded-xl bg-[#ff9429] px-5 py-3 text-sm font-bold text-white shadow-lg shadow-orange-200 hover:bg-[#ff8c1a]">

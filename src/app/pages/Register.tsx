@@ -1,5 +1,5 @@
 import { type FormEvent, useState } from 'react';
-import { Link, useLocation, useNavigate } from 'react-router';
+import { Link, useLocation } from 'react-router';
 import imgGoogle from '../../imports/Group1/a5ec32389763b208dc6a3392b5de2d21577083ce.png';
 import { register } from '../lib/api';
 import { redirectToGoogleSignIn } from '../lib/googleAuth';
@@ -8,9 +8,10 @@ export default function Register() {
   const [notice, setNotice] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isGoogleSubmitting, setIsGoogleSubmitting] = useState(false);
-  const navigate = useNavigate();
+  const [registrationSucceeded, setRegistrationSucceeded] = useState(false);
   const location = useLocation();
   const redirectTo = new URLSearchParams(location.search).get('redirect') || '/';
+  const loginPath = `/login?redirect=${encodeURIComponent(redirectTo)}`;
 
   const handleGoogleSignup = async () => {
     if (isGoogleSubmitting) return;
@@ -57,12 +58,7 @@ export default function Register() {
     try {
       const response = await register(fullName, email, password);
       setNotice(response.message ?? 'Registration successful. Please check your email to verify your account.');
-      if (response.isEmailVerified) {
-        window.setTimeout(() => navigate(`/login?redirect=${encodeURIComponent(redirectTo)}`), 1200);
-      } else {
-        const params = new URLSearchParams({ email, redirect: redirectTo });
-        window.setTimeout(() => navigate(`/verify-email?${params.toString()}`), 1200);
-      }
+      setRegistrationSucceeded(true);
     } catch (error) {
       setNotice(error instanceof Error ? error.message : 'Unable to create your account. Please try again.');
     } finally {
@@ -74,6 +70,25 @@ export default function Register() {
     <div className="w-full min-h-[calc(100vh-200px)] flex items-center justify-center py-12">
       <div className="max-w-md w-full mx-auto px-8">
         <div className="bg-white rounded-3xl p-10 shadow-xl border border-[#f1f5f9]">
+          {registrationSucceeded ? (
+            <div className="text-center">
+              <div className="mx-auto mb-6 grid h-16 w-16 place-items-center rounded-full bg-[#f0fdf4] text-3xl font-bold text-[#15803d]">
+                ✓
+              </div>
+              <h1 className="text-3xl font-bold text-[#0f172a] mb-3" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
+                Account Created
+              </h1>
+              {notice && <p className="text-[#64748b]">{notice}</p>}
+              <Link
+                to={loginPath}
+                className="mt-8 inline-flex w-full items-center justify-center rounded-xl bg-[#ff9429] px-6 py-4 font-bold text-white shadow-lg transition-all hover:bg-[#ff8c1a] hover:shadow-xl"
+                style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}
+              >
+                Return to Login
+              </Link>
+            </div>
+          ) : (
+            <>
           {/* Header */}
           <div className="text-center mb-8">
             <h1 className="text-3xl font-bold text-[#0f172a] mb-2" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
@@ -182,6 +197,8 @@ export default function Register() {
               Sign in
             </Link>
           </p>
+            </>
+          )}
         </div>
       </div>
     </div>

@@ -4,21 +4,25 @@ import { Link } from 'react-router';
 import { getProducts, type ApiProduct } from '../../lib/api';
 import { getAdminOrders, getAdminUsers, type AdminOrder, type AdminUser } from '../../lib/adminApi';
 import { formatVnd } from '../../lib/commerce';
+import { Skeleton } from '../../components/ui/skeleton';
 
 export default function AdminDashboard() {
   const [users, setUsers] = useState<AdminUser[]>([]);
   const [products, setProducts] = useState<ApiProduct[]>([]);
   const [orders, setOrders] = useState<AdminOrder[]>([]);
   const [notice, setNotice] = useState('');
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    setLoading(true);
     Promise.all([getAdminUsers(), getProducts(), getAdminOrders()])
       .then(([userResponse, productResponse, orderResponse]) => {
         setUsers(userResponse.items);
         setProducts(productResponse);
         setOrders(orderResponse);
       })
-      .catch((error) => setNotice(error instanceof Error ? error.message : 'Unable to load dashboard.'));
+      .catch((error) => setNotice(error instanceof Error ? error.message : 'Unable to load dashboard.'))
+      .finally(() => setLoading(false));
   }, []);
 
   const revenue = orders
@@ -30,6 +34,82 @@ export default function AdminDashboard() {
     { label: 'Total orders', value: orders.length.toLocaleString(), icon: ShoppingBag },
     { label: 'Paid revenue', value: formatVnd(revenue), icon: Banknote },
   ];
+
+  if (loading) {
+    return (
+      <div className="mx-auto max-w-[1440px]">
+        <Skeleton className="h-4 w-56" />
+        {/* Stat cards */}
+        <section className="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <div key={i} className="rounded-2xl border bg-white p-5 shadow-sm">
+              <Skeleton className="h-11 w-11 rounded-xl" />
+              <Skeleton className="mt-5 h-4 w-24" />
+              <Skeleton className="mt-2 h-7 w-16" />
+            </div>
+          ))}
+        </section>
+
+        {/* Mid-section panels */}
+        <section className="mt-6 grid gap-6 xl:grid-cols-2">
+          <div className="rounded-2xl border bg-white p-5 shadow-sm">
+            <div className="flex justify-between">
+              <div><Skeleton className="h-5 w-32" /><Skeleton className="mt-1 h-3 w-40" /></div>
+              <Skeleton className="h-4 w-16" />
+            </div>
+            <div className="mt-6 grid grid-cols-3 gap-3">
+              {Array.from({ length: 3 }).map((_, i) => (
+                <div key={i} className="rounded-xl bg-slate-50 p-4 flex flex-col items-center gap-2">
+                  <Skeleton className="h-8 w-10" />
+                  <Skeleton className="h-3 w-12" />
+                </div>
+              ))}
+            </div>
+          </div>
+          <div className="rounded-2xl border bg-white p-5 shadow-sm">
+            <div className="flex justify-between">
+              <div><Skeleton className="h-5 w-32" /><Skeleton className="mt-1 h-3 w-24" /></div>
+              <Skeleton className="h-4 w-16" />
+            </div>
+            <div className="mt-6 space-y-3">
+              {Array.from({ length: 4 }).map((_, i) => (
+                <div key={i} className="flex items-center justify-between rounded-xl bg-slate-50 px-4 py-3">
+                  <Skeleton className="h-4 w-20" />
+                  <Skeleton className="h-5 w-8" />
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* Recent orders table */}
+        <section className="mt-6 overflow-hidden rounded-2xl border bg-white shadow-sm">
+          <div className="flex items-center justify-between px-5 py-5">
+            <div><Skeleton className="h-5 w-32" /><Skeleton className="mt-1 h-3 w-32" /></div>
+            <Skeleton className="h-4 w-14" />
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[700px] text-left text-sm">
+              <thead className="bg-slate-50 text-xs uppercase text-slate-500">
+                <tr><th className="px-5 py-4">Order</th><th className="px-5 py-4">Customer</th><th className="px-5 py-4">Status</th><th className="px-5 py-4">Payment</th><th className="px-5 py-4">Amount</th></tr>
+              </thead>
+              <tbody>
+                {Array.from({ length: 5 }).map((_, i) => (
+                  <tr key={i} className="border-t">
+                    <td className="px-5 py-4"><Skeleton className="h-4 w-24" /></td>
+                    <td className="px-5 py-4"><Skeleton className="h-4 w-32" /></td>
+                    <td className="px-5 py-4"><Skeleton className="h-4 w-20" /></td>
+                    <td className="px-5 py-4"><Skeleton className="h-4 w-16" /></td>
+                    <td className="px-5 py-4"><Skeleton className="h-4 w-20" /></td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </section>
+      </div>
+    );
+  }
 
   return (
     <div className="mx-auto max-w-[1440px]">

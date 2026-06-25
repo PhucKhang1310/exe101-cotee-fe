@@ -1,5 +1,6 @@
 import { type FormEvent, useEffect, useMemo, useState } from 'react';
 import { Pencil, Plus, Power, Search, Trash2, X } from 'lucide-react';
+import { Skeleton } from '../../components/ui/skeleton';
 import {
   createAdminUser,
   deleteAdminUser,
@@ -129,36 +130,54 @@ export default function AdminUsers() {
               </tr>
             </thead>
             <tbody>
-              {filteredUsers.map((user) => (
-                <tr key={user.id} className="border-t border-[#f1f5f9]">
-                  <td className="px-5 py-4 font-bold">{user.fullName}</td>
-                  <td className="px-5 py-4">{user.role}</td>
-                  <td className="px-5 py-4">
-                    <div>{user.email}</div>
-                    <span className={user.isEmailVerified ? 'text-xs text-green-600' : 'text-xs text-amber-600'}>
-                      {user.isEmailVerified ? 'Verified' : 'Unverified'}
-                    </span>
-                  </td>
-                  <td className="px-5 py-4">
-                    <span className={`rounded-full px-3 py-1 text-xs font-semibold ${user.isActive ? 'bg-green-100 text-green-700' : 'bg-slate-100 text-slate-600'}`}>
-                      {user.isActive ? 'Active' : 'Inactive'}
-                    </span>
-                  </td>
-                  <td className="px-5 py-4 text-[#64748b]">{new Date(user.createdAt).toLocaleDateString()}</td>
-                  <td className="px-5 py-4">
-                    <div className="flex justify-end gap-1">
-                      <button onClick={() => openEdit(user)} className="rounded-lg p-2 hover:bg-blue-50" title="Edit"><Pencil className="h-4 w-4" /></button>
-                      <button onClick={() => void toggleStatus(user)} className="rounded-lg p-2 hover:bg-orange-50" title="Toggle status"><Power className="h-4 w-4" /></button>
-                      <button onClick={() => void remove(user)} className="rounded-lg p-2 text-red-500 hover:bg-red-50" title="Disable"><Trash2 className="h-4 w-4" /></button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
+              {loading
+                ? Array.from({ length: 6 }).map((_, i) => (
+                    <tr key={i} className="border-t border-[#f1f5f9]">
+                      <td className="px-5 py-4"><Skeleton className="h-4 w-32" /></td>
+                      <td className="px-5 py-4"><Skeleton className="h-4 w-16" /></td>
+                      <td className="px-5 py-4">
+                        <Skeleton className="h-4 w-40" />
+                        <Skeleton className="mt-1 h-3 w-16" />
+                      </td>
+                      <td className="px-5 py-4"><Skeleton className="h-6 w-16 rounded-full" /></td>
+                      <td className="px-5 py-4"><Skeleton className="h-4 w-24" /></td>
+                      <td className="px-5 py-4"><div className="flex justify-end gap-1">
+                        <Skeleton className="h-8 w-8 rounded-lg" />
+                        <Skeleton className="h-8 w-8 rounded-lg" />
+                        <Skeleton className="h-8 w-8 rounded-lg" />
+                      </div></td>
+                    </tr>
+                  ))
+                : filteredUsers.map((user) => (
+                  <tr key={user.id} className="border-t border-[#f1f5f9]">
+                    <td className="px-5 py-4 font-bold">{user.fullName}</td>
+                    <td className="px-5 py-4">{user.role}</td>
+                    <td className="px-5 py-4">
+                      <div>{user.email}</div>
+                      <span className={user.isEmailVerified ? 'text-xs text-green-600' : 'text-xs text-amber-600'}>
+                        {user.isEmailVerified ? 'Verified' : 'Unverified'}
+                      </span>
+                    </td>
+                    <td className="px-5 py-4">
+                      <span className={`rounded-full px-3 py-1 text-xs font-semibold ${user.isActive ? 'bg-green-100 text-green-700' : 'bg-slate-100 text-slate-600'}`}>
+                        {user.isActive ? 'Active' : 'Inactive'}
+                      </span>
+                    </td>
+                    <td className="px-5 py-4 text-[#64748b]">{new Date(user.createdAt).toLocaleDateString()}</td>
+                    <td className="px-5 py-4">
+                      <div className="flex justify-end gap-1">
+                        <button onClick={() => openEdit(user)} className="rounded-lg p-2 hover:bg-blue-50" title="Edit"><Pencil className="h-4 w-4" /></button>
+                        <button onClick={() => void toggleStatus(user)} className="rounded-lg p-2 hover:bg-orange-50" title="Toggle status"><Power className="h-4 w-4" /></button>
+                        <button onClick={() => void remove(user)} className="rounded-lg p-2 text-red-500 hover:bg-red-50" title="Disable"><Trash2 className="h-4 w-4" /></button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
             </tbody>
           </table>
         </div>
         <div className="border-t border-[#e2e8f0] px-5 py-4 text-sm text-[#64748b]">
-          {loading ? 'Loading users...' : `${filteredUsers.length} of ${users.length} users`}
+          {loading ? <Skeleton className="h-4 w-36" /> : `${filteredUsers.length} of ${users.length} users`}
         </div>
       </section>
 

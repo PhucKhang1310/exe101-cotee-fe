@@ -1,5 +1,6 @@
 import { type FormEvent, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router';
+import { Eye, EyeOff } from 'lucide-react';
 import imgGoogle from '../../imports/Group1/a5ec32389763b208dc6a3392b5de2d21577083ce.png';
 import { login } from '../lib/api';
 import { signInWithToken } from '../lib/store';
@@ -10,6 +11,7 @@ export default function Login() {
   const [notice, setNotice] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isGoogleSubmitting, setIsGoogleSubmitting] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
   const redirectTo = new URLSearchParams(location.search).get('redirect') || '/';
@@ -130,13 +132,22 @@ export default function Login() {
               <label className="block text-sm font-semibold text-[#0f172a] mb-2">
                 Password
               </label>
-              <input
-                name="password"
-                type="password"
-                placeholder="••••••••"
-                className="w-full px-4 py-3 bg-[#f8f7f5] border border-[#e2e8f0] rounded-xl focus:outline-none focus:border-[#ffa62b] focus:bg-white transition-all"
-                style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}
-              />
+              <div className="relative">
+                <input
+                  name="password"
+                  type={showPassword ? "text" : "password"}
+                  placeholder="••••••••"
+                  className="w-full px-4 py-3 bg-[#f8f7f5] border border-[#e2e8f0] rounded-xl focus:outline-none focus:border-[#ffa62b] focus:bg-white transition-all pr-12"
+                  style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-[#94a3b8] hover:text-[#0f172a] focus:outline-none transition-colors"
+                >
+                  {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                </button>
+              </div>
             </div>
 
             <div className="flex items-center justify-between text-sm">

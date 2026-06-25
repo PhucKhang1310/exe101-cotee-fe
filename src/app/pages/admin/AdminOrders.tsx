@@ -3,6 +3,7 @@ import { Ban, Check, RefreshCw, RotateCcw, Save, Search, X } from 'lucide-react'
 import { getProducts, type ApiProduct } from '../../lib/api';
 import { cancelOrder, getAdminOrders, updateOrderStatus, type AdminOrder } from '../../lib/adminApi';
 import { formatVnd, getTeeProductImage } from '../../lib/commerce';
+import { Skeleton } from '../../components/ui/skeleton';
 
 const orderStatuses = ['Pending', 'Processing', 'Shipping', 'Completed', 'Cancelled'];
 const paymentStatuses = ['Pending', 'Paid', 'Failed'];
@@ -278,7 +279,45 @@ export default function AdminOrders() {
               </tr>
             </thead>
             <tbody>
-              {visible.map((order) => {
+              {loading
+                ? Array.from({ length: 5 }).map((_, i) => (
+                    <tr key={i} className="border-t align-top">
+                      <td className="px-5 py-4">
+                        <Skeleton className="h-4 w-28" />
+                        <Skeleton className="mt-2 h-3 w-36" />
+                      </td>
+                      <td className="px-5 py-4">
+                        <Skeleton className="h-4 w-32" />
+                        <Skeleton className="mt-1 h-3 w-24" />
+                        <Skeleton className="mt-1 h-3 w-48" />
+                      </td>
+                      <td className="px-5 py-4">
+                        <div className="w-[280px] rounded-lg border border-slate-100 bg-slate-50/70 p-3">
+                          <Skeleton className="h-64 w-64 rounded-lg" />
+                          <Skeleton className="mt-3 h-4 w-40" />
+                          <Skeleton className="mt-1 h-3 w-28" />
+                        </div>
+                      </td>
+                      <td className="px-5 py-4"><Skeleton className="h-5 w-20" /></td>
+                      <td className="px-5 py-4">
+                        <Skeleton className="h-6 w-28 rounded-lg" />
+                        <Skeleton className="mt-2 h-6 w-28 rounded-lg" />
+                      </td>
+                      <td className="px-5 py-4">
+                        <div className="grid max-w-sm grid-cols-2 gap-3">
+                          <Skeleton className="h-10 rounded-lg" />
+                          <Skeleton className="h-10 rounded-lg" />
+                        </div>
+                        <Skeleton className="mt-4 h-16 w-full rounded-lg" />
+                        <div className="mt-4 flex gap-2">
+                          <Skeleton className="h-10 w-36 rounded-lg" />
+                          <Skeleton className="h-10 w-24 rounded-lg" />
+                          <Skeleton className="h-10 w-28 rounded-lg" />
+                        </div>
+                      </td>
+                    </tr>
+                  ))
+                : visible.map((order) => {
                 const draft = getDraft(order, drafts);
                 const hasChanges = draft.orderStatus !== order.orderStatus || draft.paymentStatus !== order.paymentStatus;
                 const invalid = isInvalidCombination(draft);
@@ -406,7 +445,7 @@ export default function AdminOrders() {
           </table>
         </div>
         <div className="border-t px-5 py-4 text-sm text-slate-500">
-          {loading ? 'Loading orders...' : `${visible.length} orders`}
+          {loading ? <Skeleton className="h-4 w-24" /> : `${visible.length} orders`}
         </div>
       </section>
     </div>

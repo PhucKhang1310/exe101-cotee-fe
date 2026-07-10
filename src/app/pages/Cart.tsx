@@ -178,7 +178,7 @@ export default function Cart() {
               {items.map((item) => (
                 <div key={item.id} className="grid grid-cols-[112px_minmax(0,1fr)] gap-5 rounded-2xl border border-[#e2e8f0] bg-white p-4 shadow-sm">
                   <div className="aspect-square overflow-hidden rounded-xl bg-[#f8f7f5]">
-                    <img src={item.image} alt={item.name} className="h-full w-full object-cover" />
+                    <img src={item.image || getTeeProductImage(item.productId)} alt={item.name} className="h-full w-full object-cover" />
                   </div>
                   <div className="min-w-0">
                     <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">

@@ -5,8 +5,8 @@ React and Vite frontend for CoTee, an AI-assisted T-shirt design and ecommerce a
 ## Live Deployment
 
 - Frontend: https://exe101-cotee-fe.vercel.app/
-- Backend API: https://exe201-cotee-be-production.up.railway.app/
-- Backend Swagger: https://exe201-cotee-be-production.up.railway.app/swagger/index.html
+- Backend API: https://api.yourdomain.com/
+- Backend Swagger: https://api.yourdomain.com/swagger/index.html
 
 ## Features
 
@@ -26,7 +26,7 @@ npm install
 Create a local `.env` file if you need to override the deployed backend:
 
 ```env
-VITE_API_BASE_URL=https://exe201-cotee-be-production.up.railway.app
+VITE_API_BASE_URL=https://api.yourdomain.com
 ```
 
 Start the development server:

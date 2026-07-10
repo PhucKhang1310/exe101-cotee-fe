@@ -14,6 +14,26 @@ export type CartItem = {
 
 const AUTH_KEY = 'cotee_auth_user';
 const CART_KEY = 'cotee_cart_items';
+const MAX_CART_IMAGE_LENGTH = 2048;
+
+function normalizeCartItem(item: CartItem): CartItem {
+  return {
+    id: String(item.id),
+    productId: String(item.productId),
+    name: String(item.name),
+    category: String(item.category),
+    price: Number(item.price) || 0,
+    image:
+      typeof item.image === 'string' &&
+      !item.image.startsWith('data:') &&
+      item.image.length <= MAX_CART_IMAGE_LENGTH
+        ? item.image
+        : '',
+    size: String(item.size),
+    color: String(item.color || '#ff9429'),
+    quantity: Number(item.quantity) || 1,
+  };
+}
 
 export function getAuthUser(): string {
   return window.localStorage.getItem(AUTH_KEY) ?? '';
@@ -42,14 +62,22 @@ export function signOut() {
 export function getCartItems(): CartItem[] {
   try {
     const parsed = JSON.parse(window.localStorage.getItem(CART_KEY) ?? '[]');
-    return Array.isArray(parsed) ? parsed : [];
+    return Array.isArray(parsed) ? parsed.map(normalizeCartItem) : [];
   } catch {
+    window.localStorage.removeItem(CART_KEY);
     return [];
   }
 }
 
 export function setCartItems(items: CartItem[]) {
-  window.localStorage.setItem(CART_KEY, JSON.stringify(items));
+  const normalizedItems = items.map(normalizeCartItem);
+
+  try {
+    window.localStorage.setItem(CART_KEY, JSON.stringify(normalizedItems));
+  } catch (error) {
+    console.warn('Unable to persist local cart.', error);
+  }
+
   window.dispatchEvent(new Event('cotee-cart-change'));
 }
 

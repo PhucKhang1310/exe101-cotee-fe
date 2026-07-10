@@ -1,5 +1,5 @@
 export const API_BASE_URL = (
-  import.meta.env.VITE_API_BASE_URL ?? 'https://exe201-cotee-be-production.up.railway.app'
+  import.meta.env.VITE_API_BASE_URL ?? 'https://api.yourdomain.com'
 ).replace(/\/$/, '');
 
 const TOKEN_KEY = 'cotee_auth_token';

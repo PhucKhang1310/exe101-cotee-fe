@@ -7,7 +7,7 @@ import { formatVnd } from '../lib/commerce';
 const fulfillmentSteps = ['Pending', 'Processing', 'Shipping', 'Completed'];
 
 const statusClasses: Record<string, string> = {
-  Pending: 'bg-[#fff7ed] text-[#c2410c] border-[#fed7aa]',
+  Pending: 'bg-[#eef8ff] text-[#244f92] border-[#b8d2e8]',
   Processing: 'bg-[#eff6ff] text-[#1d4ed8] border-[#bfdbfe]',
   Shipping: 'bg-[#f0f9ff] text-[#0369a1] border-[#bae6fd]',
   Completed: 'bg-[#f0fdf4] text-[#15803d] border-[#bbf7d0]',
@@ -91,59 +91,59 @@ export default function Orders() {
       <div className="mx-auto max-w-[1280px] px-4 sm:px-6 lg:px-8">
         <div className="mb-8 flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
           <div>
-            <p className="text-sm font-bold uppercase tracking-[0.18em] text-[#ff9429]">Client orders</p>
-            <h1 className="mt-2 text-4xl font-extrabold text-[#0f172a] sm:text-5xl" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
+            <p className="text-sm font-bold uppercase tracking-[0.18em] text-[#315fae]">Client orders</p>
+            <h1 className="mt-2 text-4xl font-extrabold text-[#102a56] sm:text-5xl" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
               Track Your Orders
             </h1>
-            <p className="mt-3 max-w-2xl text-[#64748b]">
+            <p className="mt-3 max-w-2xl text-[#5a7899]">
               Follow payment and status updates for every CoTee order from your account.
             </p>
           </div>
-          <Link to="/browse" className="inline-flex items-center justify-center rounded-xl bg-[#ff9429] px-5 py-3 text-sm font-bold text-white shadow-lg shadow-orange-200 hover:bg-[#ff8c1a]">
+          <Link to="/browse" className="inline-flex items-center justify-center rounded-xl bg-[#315fae] px-5 py-3 text-sm font-bold text-white shadow-lg shadow-blue-200 hover:bg-[#244f92]">
             Shop more designs
           </Link>
         </div>
 
         <div className="mb-6 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-          <label className="flex min-h-12 w-full items-center gap-3 rounded-xl border border-[#e2e8f0] bg-white px-4 shadow-sm md:max-w-xl">
-            <Search className="h-5 w-5 shrink-0 text-[#94a3b8]" />
+          <label className="flex min-h-12 w-full items-center gap-3 rounded-xl border border-[#c9deef] bg-white px-4 shadow-sm md:max-w-xl">
+            <Search className="h-5 w-5 shrink-0 text-[#8ca9c5]" />
             <input
               value={search}
               onChange={(event) => setSearch(event.target.value)}
               placeholder="Search order code, product, or status"
-              className="h-12 min-w-0 flex-1 bg-transparent text-sm text-[#0f172a] outline-none placeholder:text-[#94a3b8]"
+              className="h-12 min-w-0 flex-1 bg-transparent text-sm text-[#102a56] outline-none placeholder:text-[#8ca9c5]"
             />
           </label>
           <button
             type="button"
             onClick={() => void loadOrders()}
             disabled={loading}
-            className="min-h-12 rounded-xl border border-[#e2e8f0] bg-white px-5 text-sm font-bold text-[#0f172a] hover:border-[#ffa62b] disabled:cursor-not-allowed disabled:opacity-60"
+            className="min-h-12 rounded-xl border border-[#c9deef] bg-white px-5 text-sm font-bold text-[#102a56] hover:border-[#6ecdf0] disabled:cursor-not-allowed disabled:opacity-60"
           >
             {loading ? 'Refreshing...' : 'Refresh'}
           </button>
         </div>
 
         {notice && (
-          <div className="mb-6 rounded-xl border border-[#fed7aa] bg-[#fff7ed] px-4 py-3 text-sm font-semibold text-[#c2410c]">
+          <div className="mb-6 rounded-xl border border-[#b8d2e8] bg-[#eef8ff] px-4 py-3 text-sm font-semibold text-[#244f92]">
             {notice}
           </div>
         )}
 
         {loading ? (
-          <div className="rounded-2xl border border-[#e2e8f0] bg-white p-10 text-center text-[#64748b] shadow-sm">
+          <div className="rounded-2xl border border-[#c9deef] bg-white p-10 text-center text-[#5a7899] shadow-sm">
             Loading your orders...
           </div>
         ) : visibleOrders.length === 0 ? (
-          <div className="rounded-2xl border border-[#e2e8f0] bg-white p-10 text-center shadow-sm">
-            <div className="mx-auto mb-5 grid h-16 w-16 place-items-center rounded-2xl bg-[#fff5eb] text-[#ff9429]">
+          <div className="rounded-2xl border border-[#c9deef] bg-white p-10 text-center shadow-sm">
+            <div className="mx-auto mb-5 grid h-16 w-16 place-items-center rounded-2xl bg-[#eaf7ff] text-[#315fae]">
               <PackageCheck className="h-8 w-8" />
             </div>
-            <h2 className="text-2xl font-bold text-[#0f172a]">No orders found</h2>
-            <p className="mx-auto mt-3 max-w-md text-[#64748b]">
+            <h2 className="text-2xl font-bold text-[#102a56]">No orders found</h2>
+            <p className="mx-auto mt-3 max-w-md text-[#5a7899]">
               Completed checkouts will appear here with payment and shipping status.
             </p>
-            <Link to="/browse" className="mt-6 inline-flex rounded-xl bg-[#ff9429] px-6 py-3 font-bold text-white hover:bg-[#ff8c1a]">
+            <Link to="/browse" className="mt-6 inline-flex rounded-xl bg-[#315fae] px-6 py-3 font-bold text-white hover:bg-[#244f92]">
               Browse products
             </Link>
           </div>
@@ -154,16 +154,16 @@ export default function Orders() {
               const canCancel = order.paymentStatus !== 'Paid' && order.orderStatus !== 'Cancelled';
 
               return (
-                <article key={order.id} className="overflow-hidden rounded-2xl border border-[#e2e8f0] bg-white shadow-sm">
-                  <div className="flex flex-col gap-5 border-b border-[#e2e8f0] p-5 lg:flex-row lg:items-start lg:justify-between">
+                <article key={order.id} className="overflow-hidden rounded-2xl border border-[#c9deef] bg-white shadow-sm">
+                  <div className="flex flex-col gap-5 border-b border-[#c9deef] p-5 lg:flex-row lg:items-start lg:justify-between">
                     <div className="min-w-0">
                       <div className="flex flex-wrap items-center gap-3">
-                        <span className="grid h-10 w-10 place-items-center rounded-xl bg-[#fff5eb] text-[#ff9429]">
+                        <span className="grid h-10 w-10 place-items-center rounded-xl bg-[#eaf7ff] text-[#315fae]">
                           {getOrderIcon(order.orderStatus)}
                         </span>
                         <div className="min-w-0">
-                          <h2 className="break-words text-xl font-extrabold text-[#0f172a]">{order.orderCode}</h2>
-                          <p className="mt-1 text-sm text-[#64748b]">{formatDate(order.createdAt)}</p>
+                          <h2 className="break-words text-xl font-extrabold text-[#102a56]">{order.orderCode}</h2>
+                          <p className="mt-1 text-sm text-[#5a7899]">{formatDate(order.createdAt)}</p>
                         </div>
                       </div>
                       <div className="mt-4 flex flex-wrap gap-2">
@@ -177,8 +177,8 @@ export default function Orders() {
                     </div>
                     <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
                       <div className="text-left sm:text-right">
-                        <p className="text-xs font-semibold uppercase text-[#94a3b8]">Total</p>
-                        <p className="text-2xl font-extrabold text-[#0f172a]">{formatVnd(order.totalAmount)}</p>
+                        <p className="text-xs font-semibold uppercase text-[#8ca9c5]">Total</p>
+                        <p className="text-2xl font-extrabold text-[#102a56]">{formatVnd(order.totalAmount)}</p>
                       </div>
                       <button
                         type="button"
@@ -198,8 +198,8 @@ export default function Orders() {
                           const isActive = activeStep >= index;
                           return (
                             <div key={step} className="min-w-0">
-                              <div className={`h-2 rounded-full ${isActive ? 'bg-[#ff9429]' : 'bg-[#e2e8f0]'}`} />
-                              <p className={`mt-2 truncate text-xs font-bold ${isActive ? 'text-[#0f172a]' : 'text-[#94a3b8]'}`}>{step}</p>
+                              <div className={`h-2 rounded-full ${isActive ? 'bg-[#315fae]' : 'bg-[#c9deef]'}`} />
+                              <p className={`mt-2 truncate text-xs font-bold ${isActive ? 'text-[#102a56]' : 'text-[#8ca9c5]'}`}>{step}</p>
                             </div>
                           );
                         })}
@@ -207,12 +207,12 @@ export default function Orders() {
 
                       <div className="space-y-3">
                         {order.items.map((item) => (
-                          <div key={`${order.id}-${item.productId}-${item.size}`} className="grid grid-cols-[minmax(0,1fr)_auto] gap-4 rounded-xl border border-[#f1f5f9] bg-[#fbfaf8] px-4 py-3">
+                          <div key={`${order.id}-${item.productId}-${item.size}`} className="grid grid-cols-[minmax(0,1fr)_auto] gap-4 rounded-xl border border-[#e4f3fc] bg-[#f8fcff] px-4 py-3">
                             <div className="min-w-0">
-                              <p className="truncate font-bold text-[#0f172a]">{item.name}</p>
-                              <p className="mt-1 text-sm text-[#64748b]">Size {item.size} · Qty {item.quantity}</p>
+                              <p className="truncate font-bold text-[#102a56]">{item.name}</p>
+                              <p className="mt-1 text-sm text-[#5a7899]">Size {item.size} · Qty {item.quantity}</p>
                             </div>
-                            <div className="text-right text-sm font-bold text-[#0f172a]">
+                            <div className="text-right text-sm font-bold text-[#102a56]">
                               {formatVnd(item.priceAtPurchase * item.quantity)}
                             </div>
                           </div>
@@ -220,20 +220,20 @@ export default function Orders() {
                       </div>
                     </div>
 
-                    <aside className="rounded-xl border border-[#e2e8f0] bg-[#fbfaf8] p-4">
-                      <h3 className="font-bold text-[#0f172a]">Shipping details</h3>
+                    <aside className="rounded-xl border border-[#c9deef] bg-[#f8fcff] p-4">
+                      <h3 className="font-bold text-[#102a56]">Shipping details</h3>
                       <dl className="mt-4 space-y-3 text-sm">
                         <div>
-                          <dt className="font-semibold text-[#94a3b8]">Recipient</dt>
-                          <dd className="mt-1 font-bold text-[#0f172a]">{order.shippingDetails.fullName}</dd>
+                          <dt className="font-semibold text-[#8ca9c5]">Recipient</dt>
+                          <dd className="mt-1 font-bold text-[#102a56]">{order.shippingDetails.fullName}</dd>
                         </div>
                         <div>
-                          <dt className="font-semibold text-[#94a3b8]">Phone</dt>
-                          <dd className="mt-1 text-[#475569]">{order.shippingDetails.phone}</dd>
+                          <dt className="font-semibold text-[#8ca9c5]">Phone</dt>
+                          <dd className="mt-1 text-[#486f95]">{order.shippingDetails.phone}</dd>
                         </div>
                         <div>
-                          <dt className="font-semibold text-[#94a3b8]">Address</dt>
-                          <dd className="mt-1 text-[#475569]">{order.shippingDetails.address}</dd>
+                          <dt className="font-semibold text-[#8ca9c5]">Address</dt>
+                          <dd className="mt-1 text-[#486f95]">{order.shippingDetails.address}</dd>
                         </div>
                       </dl>
                     </aside>

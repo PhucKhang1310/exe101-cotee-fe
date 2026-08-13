@@ -18,7 +18,7 @@ const nextOrderStatuses: Record<string, string[]> = {
 };
 
 const statusClasses: Record<string, string> = {
-  Pending: 'border-orange-200 bg-orange-50 text-orange-700',
+  Pending: 'border-orange-200 bg-blue-50 text-blue-700',
   Processing: 'border-blue-200 bg-blue-50 text-blue-700',
   Shipping: 'border-cyan-200 bg-cyan-50 text-cyan-700',
   Completed: 'border-green-200 bg-green-50 text-green-700',
@@ -86,11 +86,11 @@ function OrderTimeline({ currentStatus, draftStatus }: { currentStatus: string; 
                 <span
                   className={`grid h-8 w-8 shrink-0 place-items-center rounded-lg border-2 text-xs font-extrabold ${
                     isDraft
-                      ? 'border-[#ff9429] bg-[#ff9429] text-white'
+                      ? 'border-[#315fae] bg-[#315fae] text-white'
                       : isComplete
                         ? 'border-green-500 bg-green-500 text-white'
                         : isPreview
-                          ? 'border-[#ff9429] bg-[#fff7ed] text-[#c2410c]'
+                          ? 'border-[#315fae] bg-[#eef8ff] text-[#244f92]'
                           : 'border-slate-200 bg-white text-slate-400'
                   }`}
                 >
@@ -102,7 +102,7 @@ function OrderTimeline({ currentStatus, draftStatus }: { currentStatus: string; 
                       index < currentIndex
                         ? 'bg-green-500'
                         : index < draftIndex
-                          ? 'bg-[#ff9429]'
+                          ? 'bg-[#315fae]'
                           : 'bg-slate-200'
                     }`}
                   />
@@ -112,7 +112,7 @@ function OrderTimeline({ currentStatus, draftStatus }: { currentStatus: string; 
                 {status}
               </p>
               {isCurrent && <p className="mt-1 text-[11px] font-semibold text-green-600">Current</p>}
-              {isDraft && <p className="mt-1 text-[11px] font-semibold text-[#c2410c]">Next</p>}
+              {isDraft && <p className="mt-1 text-[11px] font-semibold text-[#244f92]">Next</p>}
             </div>
           );
         })}
@@ -238,7 +238,7 @@ export default function AdminOrders() {
       <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
         <div>
           <h2 className="text-3xl font-extrabold">Order State Management</h2>
-          <p className="mt-2 max-w-2xl text-sm text-[#64748b]">
+          <p className="mt-2 max-w-2xl text-sm text-[#5a7899]">
             Update payment and order status for customer orders. Paid orders move into processing, then shipping, then completed.
           </p>
         </div>
@@ -246,14 +246,14 @@ export default function AdminOrders() {
           type="button"
           onClick={() => void load()}
           disabled={loading}
-          className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-4 text-sm font-bold text-slate-700 hover:border-[#ffa62b] disabled:cursor-not-allowed disabled:opacity-60"
+          className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-4 text-sm font-bold text-slate-700 hover:border-[#6ecdf0] disabled:cursor-not-allowed disabled:opacity-60"
         >
           <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
           Refresh
         </button>
       </div>
 
-      {notice && <div className="mt-5 rounded-lg border border-orange-200 bg-orange-50 px-4 py-3 text-sm font-semibold text-orange-700">{notice}</div>}
+      {notice && <div className="mt-5 rounded-lg border border-orange-200 bg-blue-50 px-4 py-3 text-sm font-semibold text-blue-700">{notice}</div>}
 
       <label className="mt-6 flex min-h-12 max-w-2xl items-center gap-3 rounded-lg border border-slate-200 bg-white px-4 shadow-sm">
         <Search className="h-5 w-5 shrink-0 text-slate-400" />
@@ -380,7 +380,7 @@ export default function AdminOrders() {
                             value={draft.paymentStatus}
                             onChange={(event) => setDraft(order, { paymentStatus: event.target.value })}
                             disabled={isSaving || order.orderStatus === 'Completed'}
-                            className="mt-2 h-10 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-800 outline-none focus:border-[#ffa62b] disabled:cursor-not-allowed disabled:opacity-60"
+                            className="mt-2 h-10 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-800 outline-none focus:border-[#6ecdf0] disabled:cursor-not-allowed disabled:opacity-60"
                           >
                             {paymentStatuses.map((status) => (
                               <option key={status} value={status}>{status}</option>
@@ -393,7 +393,7 @@ export default function AdminOrders() {
                             value={draft.orderStatus}
                             onChange={(event) => setDraft(order, { orderStatus: event.target.value })}
                             disabled={isSaving}
-                            className="mt-2 h-10 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-800 outline-none focus:border-[#ffa62b] disabled:cursor-not-allowed disabled:opacity-60"
+                            className="mt-2 h-10 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-800 outline-none focus:border-[#6ecdf0] disabled:cursor-not-allowed disabled:opacity-60"
                           >
                             {getAllowedOrderStatuses(order).map((status) => (
                               <option key={status} value={status}>{status}</option>
@@ -413,7 +413,7 @@ export default function AdminOrders() {
                           type="button"
                           onClick={() => void save(order)}
                           disabled={!hasChanges || invalid || isSaving}
-                          className="inline-flex min-h-10 min-w-36 items-center justify-center gap-2 rounded-lg bg-[#ff9429] px-4 text-sm font-bold text-white hover:bg-[#ff8c1a] disabled:cursor-not-allowed disabled:opacity-40"
+                          className="inline-flex min-h-10 min-w-36 items-center justify-center gap-2 rounded-lg bg-[#315fae] px-4 text-sm font-bold text-white hover:bg-[#244f92] disabled:cursor-not-allowed disabled:opacity-40"
                         >
                           <Save className="h-4 w-4" />
                           {isSaving ? 'Saving...' : 'Apply update'}
@@ -422,7 +422,7 @@ export default function AdminOrders() {
                           type="button"
                           onClick={() => resetDraft(order)}
                           disabled={!hasChanges || isSaving}
-                          className="inline-flex min-h-10 items-center justify-center gap-2 rounded-lg border border-slate-200 px-4 text-sm font-bold text-slate-700 hover:border-[#ffa62b] disabled:cursor-not-allowed disabled:opacity-40"
+                          className="inline-flex min-h-10 items-center justify-center gap-2 rounded-lg border border-slate-200 px-4 text-sm font-bold text-slate-700 hover:border-[#6ecdf0] disabled:cursor-not-allowed disabled:opacity-40"
                         >
                           <RotateCcw className="h-4 w-4" />
                           Discard

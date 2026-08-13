@@ -113,12 +113,12 @@ export default function AdminDashboard() {
 
   return (
     <div className="mx-auto max-w-[1440px]">
-      <p className="text-sm text-[#64748b]">Live overview from the CoTee API.</p>
-      {notice && <div className="mt-5 rounded-xl bg-orange-50 px-4 py-3 text-sm text-orange-700">{notice}</div>}
+      <p className="text-sm text-[#5a7899]">Live overview from the CoTee API.</p>
+      {notice && <div className="mt-5 rounded-xl bg-blue-50 px-4 py-3 text-sm text-blue-700">{notice}</div>}
       <section className="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         {statistics.map(({ label, value, icon: Icon }) => (
           <article key={label} className="rounded-2xl border bg-white p-5 shadow-sm">
-            <span className="grid h-11 w-11 place-items-center rounded-xl bg-orange-50 text-[#ff9429]"><Icon className="h-5 w-5" /></span>
+            <span className="grid h-11 w-11 place-items-center rounded-xl bg-blue-50 text-[#315fae]"><Icon className="h-5 w-5" /></span>
             <p className="mt-5 text-sm text-slate-500">{label}</p><p className="mt-1 text-2xl font-extrabold">{value}</p>
           </article>
         ))}
@@ -126,7 +126,7 @@ export default function AdminDashboard() {
 
       <section className="mt-6 grid gap-6 xl:grid-cols-2">
         <article className="rounded-2xl border bg-white p-5 shadow-sm">
-          <div className="flex justify-between"><div><h2 className="font-extrabold">Account health</h2><p className="text-xs text-slate-400">Current account status</p></div><Link to="/admin/users" className="text-sm font-bold text-[#ff9429]">Manage</Link></div>
+          <div className="flex justify-between"><div><h2 className="font-extrabold">Account health</h2><p className="text-xs text-slate-400">Current account status</p></div><Link to="/admin/users" className="text-sm font-bold text-[#315fae]">Manage</Link></div>
           <div className="mt-6 grid grid-cols-3 gap-3 text-center">
             <div className="rounded-xl bg-green-50 p-4"><strong className="text-2xl">{users.filter((user) => user.isActive).length}</strong><p className="text-xs text-green-700">Active</p></div>
             <div className="rounded-xl bg-slate-50 p-4"><strong className="text-2xl">{users.filter((user) => !user.isActive).length}</strong><p className="text-xs text-slate-600">Inactive</p></div>
@@ -134,7 +134,7 @@ export default function AdminDashboard() {
           </div>
         </article>
         <article className="rounded-2xl border bg-white p-5 shadow-sm">
-          <div className="flex justify-between"><div><h2 className="font-extrabold">Order pipeline</h2><p className="text-xs text-slate-400">Order status</p></div><Link to="/admin/orders" className="text-sm font-bold text-[#ff9429]">Manage</Link></div>
+          <div className="flex justify-between"><div><h2 className="font-extrabold">Order pipeline</h2><p className="text-xs text-slate-400">Order status</p></div><Link to="/admin/orders" className="text-sm font-bold text-[#315fae]">Manage</Link></div>
           <div className="mt-6 space-y-3">
             {['Pending', 'Processing', 'Shipping', 'Completed'].map((status) => {
               const count = orders.filter((order) => order.orderStatus === status).length;
@@ -145,7 +145,7 @@ export default function AdminDashboard() {
       </section>
 
       <section className="mt-6 overflow-hidden rounded-2xl border bg-white shadow-sm">
-        <div className="flex items-center justify-between px-5 py-5"><div><h2 className="font-extrabold">Recent orders</h2><p className="text-xs text-slate-400">Latest transactions</p></div><Link to="/admin/orders" className="text-sm font-bold text-[#ff9429]">View all</Link></div>
+        <div className="flex items-center justify-between px-5 py-5"><div><h2 className="font-extrabold">Recent orders</h2><p className="text-xs text-slate-400">Latest transactions</p></div><Link to="/admin/orders" className="text-sm font-bold text-[#315fae]">View all</Link></div>
         <div className="overflow-x-auto">
           <table className="w-full min-w-[700px] text-left text-sm">
             <thead className="bg-slate-50 text-xs uppercase text-slate-500"><tr><th className="px-5 py-4">Order</th><th className="px-5 py-4">Customer</th><th className="px-5 py-4">Status</th><th className="px-5 py-4">Payment</th><th className="px-5 py-4">Amount</th></tr></thead>

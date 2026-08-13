@@ -107,7 +107,7 @@ function ImageCropEditor({
             min={1} max={3} step={0.01}
             value={zoom}
             onChange={(e) => setZoom(Number(e.target.value))}
-            className="flex-1 accent-[#ff9429]"
+            className="flex-1 accent-[#315fae]"
           />
           <span className="text-sm font-bold text-slate-400">+</span>
         </div>
@@ -124,7 +124,7 @@ function ImageCropEditor({
           <button
             type="button"
             onClick={apply}
-            className="flex-1 rounded-xl bg-[#ff9429] py-3 text-sm font-bold text-white hover:bg-[#e8841f] transition-colors"
+            className="flex-1 rounded-xl bg-[#315fae] py-3 text-sm font-bold text-white hover:bg-[#244f92] transition-colors"
           >
             Apply Crop
           </button>
@@ -194,10 +194,10 @@ export default function AdminProducts() {
   return (
     <div className="mx-auto max-w-[1440px]">
       <div className="flex items-end justify-between gap-4">
-        <div><h2 className="text-3xl font-extrabold">Product Management</h2><p className="mt-2 text-sm text-[#64748b]">Create products and control pricing and stock.</p></div>
-        <button onClick={() => openForm()} className="inline-flex items-center gap-2 rounded-xl bg-[#ff9429] px-5 py-3 font-bold text-white"><Plus className="h-4 w-4" /> Add product</button>
+        <div><h2 className="text-3xl font-extrabold">Product Management</h2><p className="mt-2 text-sm text-[#5a7899]">Create products and control pricing and stock.</p></div>
+        <button onClick={() => openForm()} className="inline-flex items-center gap-2 rounded-xl bg-[#315fae] px-5 py-3 font-bold text-white"><Plus className="h-4 w-4" /> Add product</button>
       </div>
-      {notice && <div className="mt-5 rounded-xl bg-orange-50 px-4 py-3 text-sm text-orange-700">{notice}</div>}
+      {notice && <div className="mt-5 rounded-xl bg-blue-50 px-4 py-3 text-sm text-blue-700">{notice}</div>}
       <label className="mt-6 flex max-w-xl items-center gap-3 rounded-xl border bg-white px-4 py-3"><Search className="h-5 w-5 text-slate-400" /><input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search products" className="flex-1 outline-none" /></label>
 
       <div key={cropVersion} className="mt-5 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
@@ -242,7 +242,7 @@ export default function AdminProducts() {
                 <div className="mt-4 flex items-start justify-between gap-3">
                   <div>
                     <h3 className="font-extrabold">{product.name}</h3>
-                    <p className="mt-1 text-lg font-bold text-[#ff9429]">{formatVnd(product.price)}</p>
+                    <p className="mt-1 text-lg font-bold text-[#315fae]">{formatVnd(product.price)}</p>
                   </div>
                   <span className={`shrink-0 rounded-full px-3 py-1 text-xs font-bold ${product.stock ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
                     {product.stock} in stock
@@ -289,7 +289,7 @@ export default function AdminProducts() {
                   <button
                     type="button"
                     onClick={() => setShowCropEditor(true)}
-                    className="shrink-0 rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm font-semibold text-slate-700 hover:border-[#ffa62b] hover:text-[#ff9429] transition-colors"
+                    className="shrink-0 rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm font-semibold text-slate-700 hover:border-[#6ecdf0] hover:text-[#315fae] transition-colors"
                   >
                     Crop
                   </button>
@@ -301,7 +301,7 @@ export default function AdminProducts() {
                 <input required min="0" type="number" value={form.stock} onChange={(e) => setForm({ ...form, stock: e.target.value })} placeholder="Stock" className="rounded-xl border px-4 py-3" />
               </div>
             </div>
-            <button className="mt-6 w-full rounded-xl bg-[#ff9429] px-5 py-3 font-bold text-white">Save product</button>
+            <button className="mt-6 w-full rounded-xl bg-[#315fae] px-5 py-3 font-bold text-white">Save product</button>
           </form>
         </div>
       )}

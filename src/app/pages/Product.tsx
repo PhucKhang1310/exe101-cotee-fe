@@ -75,7 +75,7 @@ export default function Product() {
         price: product.price,
         image: getTeeProductImage(product.id),
         size: selectedSize,
-        color: '#ff9429',
+        color: '#315fae',
         quantity,
       });
       setNotice(`${quantity} ${product.name} added to cart.`);
@@ -90,11 +90,11 @@ export default function Product() {
     return (
       <div className="mx-auto max-w-[1280px] px-4 py-16 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 gap-10 lg:grid-cols-2">
-          <div className="aspect-square animate-pulse rounded-2xl bg-[#e2e8f0]" />
+          <div className="aspect-square animate-pulse rounded-2xl bg-[#c9deef]" />
           <div className="space-y-5 py-8">
-            <div className="h-10 w-2/3 animate-pulse rounded bg-[#e2e8f0]" />
-            <div className="h-6 w-1/3 animate-pulse rounded bg-[#f1f5f9]" />
-            <div className="h-24 animate-pulse rounded bg-[#f1f5f9]" />
+            <div className="h-10 w-2/3 animate-pulse rounded bg-[#c9deef]" />
+            <div className="h-6 w-1/3 animate-pulse rounded bg-[#e4f3fc]" />
+            <div className="h-24 animate-pulse rounded bg-[#e4f3fc]" />
           </div>
         </div>
       </div>
@@ -104,9 +104,9 @@ export default function Product() {
   if (!product || error) {
     return (
       <div className="mx-auto max-w-[1280px] px-4 py-16 text-center sm:px-6 lg:px-8">
-        <h1 className="text-3xl font-bold text-[#0f172a]">Product unavailable</h1>
-        <p className="mt-3 text-[#64748b]">{error || 'The requested product could not be found.'}</p>
-        <Link to="/browse" className="mt-6 inline-flex rounded-xl bg-[#ff9429] px-6 py-3 font-bold text-white">
+        <h1 className="text-3xl font-bold text-[#102a56]">Product unavailable</h1>
+        <p className="mt-3 text-[#5a7899]">{error || 'The requested product could not be found.'}</p>
+        <Link to="/browse" className="mt-6 inline-flex rounded-xl bg-[#315fae] px-6 py-3 font-bold text-white">
           Browse products
         </Link>
       </div>
@@ -115,9 +115,9 @@ export default function Product() {
 
   return (
     <div className="w-full">
-      <div className="border-b border-[#f1f5f9] bg-white">
+      <div className="border-b border-[#e4f3fc] bg-white">
         <div className="mx-auto max-w-[1280px] px-4 py-6 sm:px-6 lg:px-8">
-          <Link to="/browse" className="inline-flex items-center gap-2 text-sm font-semibold text-[#64748b] hover:text-[#ff9429]">
+          <Link to="/browse" className="inline-flex items-center gap-2 text-sm font-semibold text-[#5a7899] hover:text-[#315fae]">
             <ArrowLeft className="h-4 w-4" />
             Back to products
           </Link>
@@ -126,24 +126,24 @@ export default function Product() {
 
       <section className="mx-auto max-w-[1280px] px-4 py-10 sm:px-6 lg:px-8 lg:py-14">
         <div className="grid grid-cols-1 gap-10 lg:grid-cols-[minmax(0,1.05fr)_minmax(360px,0.95fr)]">
-          <div className="aspect-square overflow-hidden rounded-2xl border border-[#e2e8f0] bg-[#f8f7f5]">
+          <div className="aspect-square overflow-hidden rounded-2xl border border-[#c9deef] bg-[#f3faff]">
             <ProductImage product={product} className="h-full w-full object-cover" />
           </div>
 
-          <div className="h-fit rounded-2xl border border-[#e2e8f0] bg-white p-6 shadow-sm lg:sticky lg:top-28">
+          <div className="h-fit rounded-2xl border border-[#c9deef] bg-white p-6 shadow-sm lg:sticky lg:top-28">
             <div className={`inline-flex rounded-full px-3 py-1 text-sm font-semibold ${
               product.stock > 0 ? 'bg-[#f0fdf4] text-[#15803d]' : 'bg-[#fef2f2] text-[#b91c1c]'
             }`}>
               {product.stock > 0 ? `${product.stock} in stock` : 'Out of stock'}
             </div>
 
-            <h1 className="mt-4 text-4xl font-bold leading-tight text-[#0f172a]" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
+            <h1 className="mt-4 text-4xl font-bold leading-tight text-[#102a56]" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
               {product.name}
             </h1>
-            <p className="mt-5 text-4xl font-bold text-[#0f172a]">{formatVnd(product.price)}</p>
+            <p className="mt-5 text-4xl font-bold text-[#102a56]">{formatVnd(product.price)}</p>
 
             <div className="mt-8">
-              <h2 className="mb-3 text-sm font-bold uppercase text-[#0f172a]">Size</h2>
+              <h2 className="mb-3 text-sm font-bold uppercase text-[#102a56]">Size</h2>
               <div className="grid grid-cols-3 gap-2 sm:grid-cols-6">
                 {sizes.map((size) => (
                   <button
@@ -152,8 +152,8 @@ export default function Product() {
                     onClick={() => setSelectedSize(size)}
                     className={`h-11 rounded-lg border text-sm font-bold ${
                       selectedSize === size
-                        ? 'border-[#ff9429] bg-[#fff5eb] text-[#ff9429]'
-                        : 'border-[#e2e8f0] text-[#0f172a] hover:border-[#ffa62b]'
+                        ? 'border-[#315fae] bg-[#eaf7ff] text-[#315fae]'
+                        : 'border-[#c9deef] text-[#102a56] hover:border-[#6ecdf0]'
                     }`}
                   >
                     {size}
@@ -163,13 +163,13 @@ export default function Product() {
             </div>
 
             <div className="mt-6">
-              <h2 className="mb-3 text-sm font-bold uppercase text-[#0f172a]">Quantity</h2>
-              <div className="inline-grid h-11 grid-cols-[44px_56px_44px] overflow-hidden rounded-lg border border-[#e2e8f0]">
-                <button type="button" onClick={() => setQuantity((current) => Math.max(1, current - 1))} className="grid place-items-center hover:bg-[#f8f7f5]" aria-label="Decrease quantity">
+              <h2 className="mb-3 text-sm font-bold uppercase text-[#102a56]">Quantity</h2>
+              <div className="inline-grid h-11 grid-cols-[44px_56px_44px] overflow-hidden rounded-lg border border-[#c9deef]">
+                <button type="button" onClick={() => setQuantity((current) => Math.max(1, current - 1))} className="grid place-items-center hover:bg-[#f3faff]" aria-label="Decrease quantity">
                   <Minus className="h-4 w-4" />
                 </button>
-                <div className="grid place-items-center border-x border-[#e2e8f0] text-sm font-bold">{quantity}</div>
-                <button type="button" onClick={() => setQuantity((current) => Math.min(product.stock, current + 1))} className="grid place-items-center hover:bg-[#f8f7f5]" aria-label="Increase quantity">
+                <div className="grid place-items-center border-x border-[#c9deef] text-sm font-bold">{quantity}</div>
+                <button type="button" onClick={() => setQuantity((current) => Math.min(product.stock, current + 1))} className="grid place-items-center hover:bg-[#f3faff]" aria-label="Increase quantity">
                   <Plus className="h-4 w-4" />
                 </button>
               </div>
@@ -180,7 +180,7 @@ export default function Product() {
                 type="button"
                 onClick={addToCart}
                 disabled={product.stock <= 0 || isAdding}
-                className="inline-flex h-13 items-center justify-center gap-3 rounded-xl bg-[#ff9429] px-6 font-bold text-white disabled:cursor-not-allowed disabled:opacity-50"
+                className="inline-flex h-13 items-center justify-center gap-3 rounded-xl bg-[#315fae] px-6 font-bold text-white disabled:cursor-not-allowed disabled:opacity-50"
               >
                 <ShoppingBag className="h-5 w-5" />
                 {isAdding ? 'Adding...' : 'Add to cart'}
@@ -188,31 +188,31 @@ export default function Product() {
               <button
                 type="button"
                 onClick={() => setIsWishlisted((current) => !current)}
-                className="grid h-13 place-items-center rounded-xl border border-[#e2e8f0] text-[#ff9429] hover:border-[#ffa62b]"
+                className="grid h-13 place-items-center rounded-xl border border-[#c9deef] text-[#315fae] hover:border-[#6ecdf0]"
                 aria-label={isWishlisted ? 'Remove from wishlist' : 'Save to wishlist'}
               >
                 <Heart className={`h-5 w-5 ${isWishlisted ? 'fill-current' : ''}`} />
               </button>
             </div>
 
-            {notice && <div className="mt-4 rounded-xl bg-[#fff7ed] px-4 py-3 text-sm font-semibold text-[#c2410c]">{notice}</div>}
+            {notice && <div className="mt-4 rounded-xl bg-[#eef8ff] px-4 py-3 text-sm font-semibold text-[#244f92]">{notice}</div>}
           </div>
         </div>
       </section>
 
       {relatedProducts.length > 0 && (
-        <section className="border-t border-[#e2e8f0] bg-white py-12">
+        <section className="border-t border-[#c9deef] bg-white py-12">
           <div className="mx-auto max-w-[1280px] px-4 sm:px-6 lg:px-8">
-            <h2 className="text-3xl font-bold text-[#0f172a]">More products</h2>
+            <h2 className="text-3xl font-bold text-[#102a56]">More products</h2>
             <div className="mt-8 grid grid-cols-2 gap-4 lg:grid-cols-4">
               {relatedProducts.map((relatedProduct) => (
-                <Link key={relatedProduct.id} to={`/product/${relatedProduct.id}`} className="overflow-hidden rounded-xl border border-[#e2e8f0] bg-white transition-colors hover:border-[#ffa62b]">
+                <Link key={relatedProduct.id} to={`/product/${relatedProduct.id}`} className="overflow-hidden rounded-xl border border-[#c9deef] bg-white transition-colors hover:border-[#6ecdf0]">
                   <div className="aspect-square">
                     <ProductImage product={relatedProduct} className="h-full w-full object-cover" />
                   </div>
                   <div className="p-4">
-                    <h3 className="font-bold text-[#0f172a]">{relatedProduct.name}</h3>
-                    <p className="mt-1 text-sm text-[#64748b]">{formatVnd(relatedProduct.price)}</p>
+                    <h3 className="font-bold text-[#102a56]">{relatedProduct.name}</h3>
+                    <p className="mt-1 text-sm text-[#5a7899]">{formatVnd(relatedProduct.price)}</p>
                   </div>
                 </Link>
               ))}

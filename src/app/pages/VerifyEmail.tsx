@@ -52,47 +52,47 @@ export default function VerifyEmail() {
   return (
     <div className="w-full min-h-[calc(100vh-200px)] flex items-center justify-center py-12">
       <div className="max-w-md w-full mx-auto px-8">
-        <div className="bg-white rounded-3xl p-10 shadow-xl border border-[#f1f5f9] text-center">
-          <h1 className="text-3xl font-bold text-[#0f172a] mb-3">
+        <div className="bg-white rounded-3xl p-10 shadow-xl border border-[#e4f3fc] text-center">
+          <h1 className="text-3xl font-bold text-[#102a56] mb-3">
             {state === 'success' ? 'Email Verified' : 'Verify Your Email'}
           </h1>
 
-          <div className="mb-6 rounded-xl border border-[#fed7aa] bg-[#fff7ed] px-4 py-3 text-sm font-semibold text-[#c2410c]">
+          <div className="mb-6 rounded-xl border border-[#b8d2e8] bg-[#eef8ff] px-4 py-3 text-sm font-semibold text-[#244f92]">
             {notice}
           </div>
 
           {state === 'success' ? (
             <Link
               to={`/login?redirect=${encodeURIComponent(redirectTo)}`}
-              className="block w-full px-6 py-4 bg-[#ff9429] text-white font-bold rounded-xl hover:bg-[#ff8c1a] transition-all"
+              className="block w-full px-6 py-4 bg-[#315fae] text-white font-bold rounded-xl hover:bg-[#244f92] transition-all"
             >
               Continue to Sign In
             </Link>
           ) : (
             <form onSubmit={handleResend} className="space-y-4 text-left">
               <div>
-                <label className="block text-sm font-semibold text-[#0f172a] mb-2">Email Address</label>
+                <label className="block text-sm font-semibold text-[#102a56] mb-2">Email Address</label>
                 <input
                   type="email"
                   value={email}
                   onChange={(event) => setEmail(event.target.value)}
                   placeholder="your@email.com"
                   required
-                  className="w-full px-4 py-3 bg-[#f8f7f5] border border-[#e2e8f0] rounded-xl focus:outline-none focus:border-[#ffa62b] focus:bg-white transition-all"
+                  className="w-full px-4 py-3 bg-[#f3faff] border border-[#c9deef] rounded-xl focus:outline-none focus:border-[#6ecdf0] focus:bg-white transition-all"
                 />
               </div>
               <button
                 type="submit"
                 disabled={isResending}
-                className="w-full px-6 py-4 bg-[#ff9429] text-white font-bold rounded-xl hover:bg-[#ff8c1a] transition-all disabled:opacity-60"
+                className="w-full px-6 py-4 bg-[#315fae] text-white font-bold rounded-xl hover:bg-[#244f92] transition-all disabled:opacity-60"
               >
                 {isResending ? 'Requesting email...' : 'Resend Verification Email'}
               </button>
             </form>
           )}
 
-          <p className="mt-6 text-sm text-[#64748b]">
-            <Link to="/login" className="text-[#ff9429] hover:text-[#ff8c1a] font-semibold">
+          <p className="mt-6 text-sm text-[#5a7899]">
+            <Link to="/login" className="text-[#315fae] hover:text-[#244f92] font-semibold">
               Back to sign in
             </Link>
           </p>

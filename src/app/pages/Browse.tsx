@@ -15,8 +15,8 @@ const browseModes: Array<{ id: BrowseMode; label: string; icon: LucideIcon }> = 
 ];
 
 const previewStyles: Record<AssetKind, React.CSSProperties> = {
-  shirt: { backgroundColor: '#f8f7f5' },
-  design: { backgroundColor: '#fff7ed' },
+  shirt: { backgroundColor: '#f3faff' },
+  design: { backgroundColor: '#eef8ff' },
 };
 
 function filterAndSortItems(items: BrowseItem[], search: string, sort: string) {
@@ -110,8 +110,8 @@ export default function Browse() {
     return (
       <article
         key={item.id}
-        className={`group overflow-hidden rounded-2xl border-2 bg-white shadow-sm transition-all hover:border-[#ffa62b] hover:shadow-xl ${
-          isSelected ? 'border-[#ff9429] shadow-lg shadow-orange-100' : 'border-transparent'
+        className={`group overflow-hidden rounded-2xl border-2 bg-white shadow-sm transition-all hover:border-[#6ecdf0] hover:shadow-xl ${
+          isSelected ? 'border-[#315fae] shadow-lg shadow-blue-100' : 'border-transparent'
         } ${
           compact ? 'w-[300px] shrink-0 snap-start sm:w-[340px]' : ''
         }`}
@@ -129,18 +129,18 @@ export default function Browse() {
               }`}
             />
           ) : (
-            <div className="grid h-full place-items-center text-[#94a3b8]">
+            <div className="grid h-full place-items-center text-[#8ca9c5]">
               <ImageOff className="h-12 w-12" />
             </div>
           )}
 
           {item.kind === 'shirt' && item.backImageUrl && (
-            <div className="absolute right-4 top-4 flex rounded-full bg-white/90 p-1 text-sm font-semibold text-[#64748b] shadow-sm backdrop-blur-sm">
+            <div className="absolute right-4 top-4 flex rounded-full bg-white/90 p-1 text-sm font-semibold text-[#5a7899] shadow-sm backdrop-blur-sm">
               <button
                 type="button"
                 onClick={() => setShirtView(item.id, 'front')}
                 className={`rounded-full px-3 py-1 transition-colors ${
-                  shirtView === 'front' ? 'bg-[#ff9429] text-white' : 'hover:bg-[#fff5eb]'
+                  shirtView === 'front' ? 'bg-[#315fae] text-white' : 'hover:bg-[#eaf7ff]'
                 }`}
               >
                 Front
@@ -149,7 +149,7 @@ export default function Browse() {
                 type="button"
                 onClick={() => setShirtView(item.id, 'back')}
                 className={`rounded-full px-3 py-1 transition-colors ${
-                  shirtView === 'back' ? 'bg-[#ff9429] text-white' : 'hover:bg-[#fff5eb]'
+                  shirtView === 'back' ? 'bg-[#315fae] text-white' : 'hover:bg-[#eaf7ff]'
                 }`}
               >
                 Back
@@ -160,13 +160,13 @@ export default function Browse() {
         <div className="p-6">
           <div className="flex items-start justify-between gap-4">
             <div>
-              <h2 className="font-bold text-[#0f172a] transition-colors group-hover:text-[#ff9429]">{item.name}</h2>
-              <p className="mt-2 text-sm text-[#64748b]">{item.description}</p>
+              <h2 className="font-bold text-[#102a56] transition-colors group-hover:text-[#315fae]">{item.name}</h2>
+              <p className="mt-2 text-sm text-[#5a7899]">{item.description}</p>
             </div>
             <button
               type="button"
               onClick={() => toggleSavedItem(item.id)}
-              className="shrink-0 text-[#ff9429]"
+              className="shrink-0 text-[#315fae]"
               aria-label={isSaved ? `Remove saved ${item.name}` : `Save ${item.name}`}
             >
               <Heart className={`h-5 w-5 ${isSaved ? 'fill-current' : ''}`} />
@@ -177,8 +177,8 @@ export default function Browse() {
             onClick={() => selectStudioAsset(item)}
             className={`mt-5 flex w-full items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-bold transition-colors ${
               isSelected
-                ? 'bg-[#ff9429] text-white'
-                : 'border border-[#fed7aa] bg-[#fff7ed] text-[#c2410c] hover:bg-[#ffedd5]'
+                ? 'bg-[#315fae] text-white'
+                : 'border border-[#b8d2e8] bg-[#eef8ff] text-[#244f92] hover:bg-[#d8effc]'
             }`}
           >
             {isSelected ? <Check className="h-4 w-4" /> : item.kind === 'shirt' ? <Shirt className="h-4 w-4" /> : <Palette className="h-4 w-4" />}
@@ -193,10 +193,10 @@ export default function Browse() {
     <div className={`w-full py-12 ${hasStudioSelection ? 'pb-40' : ''}`}>
       <div className="max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-8">
         <div className="mb-10">
-          <h1 className="text-5xl font-bold text-[#0f172a]" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
+          <h1 className="text-5xl font-bold text-[#102a56]" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
             Browse Assets
           </h1>
-          <p className="mt-4 text-lg text-[#64748b]">Pick a design graphic or a plain shirt base for your next CoTee mockup.</p>
+          <p className="mt-4 text-lg text-[#5a7899]">Pick a design graphic or a plain shirt base for your next CoTee mockup.</p>
         </div>
 
         <div className="mb-8 flex items-center gap-3 overflow-x-auto pb-3">
@@ -214,8 +214,8 @@ export default function Browse() {
                 }}
                 className={`flex min-w-[144px] items-center justify-center gap-2 whitespace-nowrap rounded-xl px-6 py-3 font-semibold transition-colors ${
                   isActive
-                    ? 'bg-[#ff9429] text-white shadow-lg'
-                    : 'border border-[#e2e8f0] bg-white text-[#64748b] hover:border-[#ffa62b]'
+                    ? 'bg-[#315fae] text-white shadow-lg'
+                    : 'border border-[#c9deef] bg-white text-[#5a7899] hover:border-[#6ecdf0]'
                 }`}
               >
                 <Icon className="h-5 w-5" />
@@ -235,14 +235,14 @@ export default function Browse() {
                 setVisibleCount(6);
               }}
               placeholder={mode === 'all' ? 'Search assets...' : mode === 'design' ? 'Search designs...' : 'Search shirts...'}
-              className="w-full rounded-xl border border-[#e2e8f0] bg-white px-6 py-4 pr-12 focus:border-[#ffa62b] focus:outline-none"
+              className="w-full rounded-xl border border-[#c9deef] bg-white px-6 py-4 pr-12 focus:border-[#6ecdf0] focus:outline-none"
             />
-            <Search className="absolute right-4 top-1/2 h-5 w-5 -translate-y-1/2 text-[#94a3b8]" />
+            <Search className="absolute right-4 top-1/2 h-5 w-5 -translate-y-1/2 text-[#8ca9c5]" />
           </div>
           <select
             value={sort}
             onChange={(event) => setSort(event.target.value)}
-            className="rounded-xl border border-[#e2e8f0] bg-white px-6 py-4 focus:border-[#ffa62b] focus:outline-none"
+            className="rounded-xl border border-[#c9deef] bg-white px-6 py-4 focus:border-[#6ecdf0] focus:outline-none"
           >
             <option>Name</option>
             <option>Newest</option>
@@ -254,17 +254,17 @@ export default function Browse() {
             <section>
               <div className="mb-4 flex items-end justify-between gap-4">
                 <div>
-                  <h2 className="text-2xl font-bold text-[#0f172a]">Shirt</h2>
-                  <p className="mt-1 text-sm text-[#64748b]">Plain shirt bases from Cloudinary.</p>
+                  <h2 className="text-2xl font-bold text-[#102a56]">Shirt</h2>
+                  <p className="mt-1 text-sm text-[#5a7899]">Plain shirt bases from Cloudinary.</p>
                 </div>
-                <span className="text-sm font-semibold text-[#94a3b8]">{filteredShirts.length} items</span>
+                <span className="text-sm font-semibold text-[#8ca9c5]">{filteredShirts.length} items</span>
               </div>
               {filteredShirts.length > 0 ? (
                 <div className="-mx-4 flex snap-x gap-6 overflow-x-auto px-4 pb-4 sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8">
                   {filteredShirts.map((item) => renderAssetCard(item, true))}
                 </div>
               ) : (
-                <div className="rounded-2xl border border-[#e2e8f0] bg-white p-8 text-center text-sm text-[#64748b]">
+                <div className="rounded-2xl border border-[#c9deef] bg-white p-8 text-center text-sm text-[#5a7899]">
                   No shirts found.
                 </div>
               )}
@@ -273,17 +273,17 @@ export default function Browse() {
             <section>
               <div className="mb-4 flex items-end justify-between gap-4">
                 <div>
-                  <h2 className="text-2xl font-bold text-[#0f172a]">Design</h2>
-                  <p className="mt-1 text-sm text-[#64748b]">Standalone graphics from Cloudinary.</p>
+                  <h2 className="text-2xl font-bold text-[#102a56]">Design</h2>
+                  <p className="mt-1 text-sm text-[#5a7899]">Standalone graphics from Cloudinary.</p>
                 </div>
-                <span className="text-sm font-semibold text-[#94a3b8]">{filteredDesigns.length} items</span>
+                <span className="text-sm font-semibold text-[#8ca9c5]">{filteredDesigns.length} items</span>
               </div>
               {filteredDesigns.length > 0 ? (
                 <div className="-mx-4 flex snap-x gap-6 overflow-x-auto px-4 pb-4 sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8">
                   {filteredDesigns.map((item) => renderAssetCard(item, true))}
                 </div>
               ) : (
-                <div className="rounded-2xl border border-[#e2e8f0] bg-white p-8 text-center text-sm text-[#64748b]">
+                <div className="rounded-2xl border border-[#c9deef] bg-white p-8 text-center text-sm text-[#5a7899]">
                   No designs found.
                 </div>
               )}
@@ -294,9 +294,9 @@ export default function Browse() {
             {visibleItems.map((item) => renderAssetCard(item))}
           </div>
         ) : (
-          <div className="rounded-2xl border border-[#e2e8f0] bg-white p-10 text-center">
-            <h2 className="font-bold text-[#0f172a]">No {mode === 'design' ? 'designs' : 'shirts'} found</h2>
-            <p className="mt-2 text-sm text-[#64748b]">Try another search term.</p>
+          <div className="rounded-2xl border border-[#c9deef] bg-white p-10 text-center">
+            <h2 className="font-bold text-[#102a56]">No {mode === 'design' ? 'designs' : 'shirts'} found</h2>
+            <p className="mt-2 text-sm text-[#5a7899]">Try another search term.</p>
           </div>
         )}
 
@@ -305,7 +305,7 @@ export default function Browse() {
             <button
               type="button"
               onClick={() => setVisibleCount((current) => current + 6)}
-              className="rounded-xl border-2 border-[#e2e8f0] bg-white px-8 py-4 font-bold text-[#0f172a] transition-colors hover:border-[#ffa62b] hover:bg-[#fff5eb]"
+              className="rounded-xl border-2 border-[#c9deef] bg-white px-8 py-4 font-bold text-[#102a56] transition-colors hover:border-[#6ecdf0] hover:bg-[#eaf7ff]"
             >
               Load More {mode === 'design' ? 'Designs' : 'Shirts'}
             </button>
@@ -313,19 +313,19 @@ export default function Browse() {
         )}
       </div>
       {hasStudioSelection && (
-        <div className="fixed inset-x-0 bottom-0 z-40 border-t border-[#fed7aa] bg-white/95 shadow-2xl shadow-slate-400/20 backdrop-blur">
+        <div className="fixed inset-x-0 bottom-0 z-40 border-t border-[#b8d2e8] bg-white/95 shadow-2xl shadow-slate-400/20 backdrop-blur">
           <div className="mx-auto flex max-w-[1280px] flex-col gap-4 px-4 py-4 sm:px-6 lg:flex-row lg:items-center lg:justify-between lg:px-8">
             <div className="grid flex-1 gap-3 sm:grid-cols-2">
-              <div className="flex items-center justify-between gap-3 rounded-xl border border-[#e2e8f0] bg-[#f8fafc] px-4 py-3">
+              <div className="flex items-center justify-between gap-3 rounded-xl border border-[#c9deef] bg-[#f3faff] px-4 py-3">
                 <div className="min-w-0">
-                  <p className="text-xs font-bold uppercase tracking-wide text-[#94a3b8]">Shirt</p>
-                  <p className="truncate text-sm font-bold text-[#0f172a]">{selectedShirt?.name ?? 'No shirt selected'}</p>
+                  <p className="text-xs font-bold uppercase tracking-wide text-[#8ca9c5]">Shirt</p>
+                  <p className="truncate text-sm font-bold text-[#102a56]">{selectedShirt?.name ?? 'No shirt selected'}</p>
                 </div>
                 {selectedShirt && (
                   <button
                     type="button"
                     onClick={() => setSelectedShirtId('')}
-                    className="rounded-lg p-2 text-[#64748b] transition-colors hover:bg-white hover:text-[#0f172a]"
+                    className="rounded-lg p-2 text-[#5a7899] transition-colors hover:bg-white hover:text-[#102a56]"
                     aria-label="Clear selected shirt"
                     title="Clear selected shirt"
                   >
@@ -333,16 +333,16 @@ export default function Browse() {
                   </button>
                 )}
               </div>
-              <div className="flex items-center justify-between gap-3 rounded-xl border border-[#e2e8f0] bg-[#f8fafc] px-4 py-3">
+              <div className="flex items-center justify-between gap-3 rounded-xl border border-[#c9deef] bg-[#f3faff] px-4 py-3">
                 <div className="min-w-0">
-                  <p className="text-xs font-bold uppercase tracking-wide text-[#94a3b8]">Design</p>
-                  <p className="truncate text-sm font-bold text-[#0f172a]">{selectedDesign?.name ?? 'No design selected'}</p>
+                  <p className="text-xs font-bold uppercase tracking-wide text-[#8ca9c5]">Design</p>
+                  <p className="truncate text-sm font-bold text-[#102a56]">{selectedDesign?.name ?? 'No design selected'}</p>
                 </div>
                 {selectedDesign && (
                   <button
                     type="button"
                     onClick={() => setSelectedDesignId('')}
-                    className="rounded-lg p-2 text-[#64748b] transition-colors hover:bg-white hover:text-[#0f172a]"
+                    className="rounded-lg p-2 text-[#5a7899] transition-colors hover:bg-white hover:text-[#102a56]"
                     aria-label="Clear selected design"
                     title="Clear selected design"
                   >
@@ -354,7 +354,7 @@ export default function Browse() {
             <button
               type="button"
               onClick={openStudio}
-              className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#ff9429] px-6 py-4 text-sm font-bold text-white shadow-lg shadow-orange-200 transition-colors hover:bg-[#ff8c1a]"
+              className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#315fae] px-6 py-4 text-sm font-bold text-white shadow-lg shadow-blue-200 transition-colors hover:bg-[#244f92]"
             >
               Open Studio
             </button>

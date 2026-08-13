@@ -6,7 +6,6 @@ import {
   Menu,
   Palette,
   ShoppingCart,
-  Shirt,
   Users,
   X,
 } from 'lucide-react';
@@ -51,8 +50,8 @@ export default function AdminLayout() {
         onClick={() => setIsSidebarOpen(false)}
         className={`flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-semibold transition-colors ${
           active
-            ? 'bg-[#ff9429] text-white shadow-sm shadow-orange-200'
-            : 'text-[#64748b] hover:bg-[#fff7ed] hover:text-[#ff9429]'
+            ? 'bg-[#315fae] text-white shadow-sm shadow-blue-200'
+            : 'text-[#5a7899] hover:bg-[#eef8ff] hover:text-[#315fae]'
         }`}
       >
         <Icon className="h-5 w-5" />
@@ -87,7 +86,7 @@ export default function AdminLayout() {
 
   return (
     <div
-      className="min-h-screen bg-[#f8f7f5] text-[#0f172a]"
+      className="min-h-screen bg-[#f3faff] text-[#102a56]"
       style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}
     >
       {isSidebarOpen && (
@@ -100,23 +99,23 @@ export default function AdminLayout() {
       )}
 
       <aside
-        className={`fixed inset-y-0 left-0 z-50 flex w-[272px] flex-col border-r border-[#f1f5f9] bg-white transition-transform lg:translate-x-0 ${
+        className={`fixed inset-y-0 left-0 z-50 flex w-[272px] flex-col border-r border-[#e4f3fc] bg-white transition-transform lg:translate-x-0 ${
           isSidebarOpen ? 'translate-x-0' : '-translate-x-full'
         }`}
       >
-        <div className="flex h-20 items-center justify-between border-b border-[#f8f7f5] px-5">
+        <div className="flex h-20 items-center justify-between border-b border-[#f3faff] px-5">
           <Link to="/admin" className="flex items-center gap-3">
-            <span className="grid h-11 w-11 place-items-center rounded-xl bg-[#ff9429] text-white">
-              <Shirt className="h-6 w-6" />
+            <span className="h-11 w-16 overflow-hidden rounded-xl border border-[#c9deef] bg-[#eaf7ff] shadow-sm">
+              <img src="/cotee-logo.jpg" alt="CoTee" className="h-full w-full object-cover object-center" />
             </span>
             <span>
               <strong className="block text-lg font-extrabold">CoTee Admin</strong>
-              <span className="block text-xs text-[#94a3b8]">Platform Hub</span>
+              <span className="block text-xs text-[#8ca9c5]">Platform Hub</span>
             </span>
           </Link>
           <button
             type="button"
-            className="rounded-lg p-2 text-[#64748b] hover:bg-[#f8f7f5] lg:hidden"
+            className="rounded-lg p-2 text-[#5a7899] hover:bg-[#f3faff] lg:hidden"
             onClick={() => setIsSidebarOpen(false)}
             aria-label="Close navigation"
           >
@@ -128,23 +127,23 @@ export default function AdminLayout() {
           <div className="space-y-1">{primaryNavigation.map(renderLink)}</div>
         </nav>
 
-        <div className="m-4 rounded-2xl border border-[#fed7aa] bg-[#fffaf5] p-4">
+        <div className="m-4 rounded-2xl border border-[#b8d2e8] bg-[#f3faff] p-4">
           <div className="flex items-center justify-between text-xs">
-            <span className="font-bold text-[#ff9429]">System Health</span>
+            <span className="font-bold text-[#315fae]">System Health</span>
             <span className="text-[#16a34a]">98%</span>
           </div>
-          <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-[#ffedd5]">
-            <div className="h-full w-[92%] rounded-full bg-[#ff9429]" />
+          <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-[#d8effc]">
+            <div className="h-full w-[92%] rounded-full bg-[#315fae]" />
           </div>
-          <p className="mt-3 text-[11px] text-[#94a3b8]">All services operational</p>
+          <p className="mt-3 text-[11px] text-[#8ca9c5]">All services operational</p>
         </div>
       </aside>
 
       <div className="min-h-screen lg:pl-[272px]">
-        <header className="sticky top-0 z-30 flex h-20 items-center gap-4 border-b border-[#f1f5f9] bg-white/95 px-4 backdrop-blur sm:px-6 lg:px-8">
+        <header className="sticky top-0 z-30 flex h-20 items-center gap-4 border-b border-[#e4f3fc] bg-white/95 px-4 backdrop-blur sm:px-6 lg:px-8">
           <button
             type="button"
-            className="rounded-lg p-2 text-[#475569] hover:bg-[#f8f7f5] lg:hidden"
+            className="rounded-lg p-2 text-[#486f95] hover:bg-[#f3faff] lg:hidden"
             onClick={() => setIsSidebarOpen(true)}
             aria-label="Open navigation"
           >
@@ -160,7 +159,7 @@ export default function AdminLayout() {
               type="button"
               onClick={() => setIsProfileOpen((current) => !current)}
               className={`flex items-center gap-3 rounded-xl px-2 py-1.5 text-left transition-colors ${
-                isProfileOpen ? 'bg-[#fff7ed]' : 'hover:bg-[#f8f7f5]'
+                isProfileOpen ? 'bg-[#eef8ff]' : 'hover:bg-[#f3faff]'
               }`}
               aria-expanded={isProfileOpen}
               aria-haspopup="menu"
@@ -169,13 +168,13 @@ export default function AdminLayout() {
                 <strong className="block truncate text-sm">
                   {claims?.name || claims?.email || 'Administrator'}
                 </strong>
-                <span className="block text-[11px] font-semibold text-[#ff9429]">Administrator</span>
+                <span className="block text-[11px] font-semibold text-[#315fae]">Administrator</span>
               </span>
               <span className="grid h-10 w-10 place-items-center rounded-full bg-[#315b5a] text-sm font-bold text-white shadow-sm">
                 {(claims?.name || claims?.email || 'A').slice(0, 2).toUpperCase()}
               </span>
               <ChevronDown
-                className={`hidden h-4 w-4 text-[#94a3b8] transition-transform sm:block ${
+                className={`hidden h-4 w-4 text-[#8ca9c5] transition-transform sm:block ${
                   isProfileOpen ? 'rotate-180' : ''
                 }`}
               />
@@ -184,13 +183,13 @@ export default function AdminLayout() {
             {isProfileOpen && (
               <div
                 role="menu"
-                className="absolute right-0 top-[calc(100%+10px)] w-72 overflow-hidden rounded-2xl border border-[#e2e8f0] bg-white shadow-xl shadow-slate-200/70"
+                className="absolute right-0 top-[calc(100%+10px)] w-72 overflow-hidden rounded-2xl border border-[#c9deef] bg-white shadow-xl shadow-slate-200/70"
               >
-                <div className="border-b border-[#f1f5f9] bg-[#fffaf5] px-4 py-4">
+                <div className="border-b border-[#e4f3fc] bg-[#f3faff] px-4 py-4">
                   <p className="truncate text-sm font-extrabold">
                     {claims?.name || 'Administrator'}
                   </p>
-                  <p className="mt-1 truncate text-xs text-[#64748b]">
+                  <p className="mt-1 truncate text-xs text-[#5a7899]">
                     {claims?.email || 'Admin account'}
                   </p>
                 </div>
@@ -207,7 +206,7 @@ export default function AdminLayout() {
                     </span>
                     <span>
                       <span className="block">{isLoggingOut ? 'Signing out...' : 'Logout'}</span>
-                      <span className="block text-left text-[11px] font-normal text-[#94a3b8]">
+                      <span className="block text-left text-[11px] font-normal text-[#8ca9c5]">
                         End this admin session
                       </span>
                     </span>

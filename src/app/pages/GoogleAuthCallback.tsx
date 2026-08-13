@@ -31,11 +31,11 @@ export default function GoogleAuthCallback() {
   return (
     <div className="w-full min-h-[calc(100vh-200px)] flex items-center justify-center py-12">
       <div className="max-w-md w-full mx-auto px-8">
-        <div className="bg-white rounded-3xl p-10 shadow-xl border border-[#f1f5f9] text-center">
-          <h1 className="text-2xl font-bold text-[#0f172a] mb-3" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
+        <div className="bg-white rounded-3xl p-10 shadow-xl border border-[#e4f3fc] text-center">
+          <h1 className="text-2xl font-bold text-[#102a56] mb-3" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
             Google Sign-In
           </h1>
-          <p className="text-sm font-semibold text-[#64748b]">{notice}</p>
+          <p className="text-sm font-semibold text-[#5a7899]">{notice}</p>
         </div>
       </div>
     </div>

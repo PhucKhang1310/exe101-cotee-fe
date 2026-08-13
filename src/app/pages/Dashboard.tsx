@@ -584,7 +584,7 @@ export default function Dashboard() {
         price: product.price,
         image: imageUrl,
         size: selectedSize,
-        color: '#ff9429',
+        color: '#315fae',
         quantity,
       });
       setStudioNotice(`${quantity} custom T-shirt${quantity > 1 ? 's' : ''} added to cart.`);
@@ -902,19 +902,19 @@ export default function Dashboard() {
   return (
     <div className="w-full py-8">
       <div className="mx-auto w-full max-w-[1840px] px-4 sm:px-6 lg:px-8">
-        <div className="grid min-h-[760px] grid-cols-1 rounded-2xl border border-[#e2e8f0] bg-white shadow-xl shadow-slate-200/60 lg:h-[calc(100vh-8rem)] lg:min-h-[760px] lg:grid-cols-[360px_minmax(0,1fr)] xl:grid-cols-[420px_minmax(0,1fr)]">
+        <div className="grid min-h-[760px] grid-cols-1 rounded-2xl border border-[#c9deef] bg-white shadow-xl shadow-slate-200/60 lg:h-[calc(100vh-8rem)] lg:min-h-[760px] lg:grid-cols-[360px_minmax(0,1fr)] xl:grid-cols-[420px_minmax(0,1fr)]">
       {/* Left Sidebar - AI Chat */}
-      <div className="bg-white border-b border-[#e2e8f0] flex min-h-[620px] min-w-0 flex-col overflow-hidden rounded-l-2xl lg:min-h-0 lg:border-b-0 lg:border-r">
+      <div className="bg-white border-b border-[#c9deef] flex min-h-[620px] min-w-0 flex-col overflow-hidden rounded-l-2xl lg:min-h-0 lg:border-b-0 lg:border-r">
         {/* Chat Header */}
-        <div className="bg-[#fffaf5] border-b border-[#fed7aa] px-5 py-5">
+        <div className="bg-[#f3faff] border-b border-[#b8d2e8] px-5 py-5">
           <div className="flex items-center justify-between gap-3">
-            <h2 className="text-sm font-bold text-[#0f172a] uppercase tracking-wide">
+            <h2 className="text-sm font-bold text-[#102a56] uppercase tracking-wide">
               AI Design Assistant
             </h2>
             <button
               type="button"
               onClick={handleNewChatSession}
-              className="rounded-lg bg-[#ff9429] px-3 py-2 text-xs font-bold text-white transition-colors hover:bg-[#ff8c1a]"
+              className="rounded-lg bg-[#315fae] px-3 py-2 text-xs font-bold text-white transition-colors hover:bg-[#244f92]"
             >
               New
             </button>
@@ -925,7 +925,7 @@ export default function Dashboard() {
               setActiveChatSessionId(event.target.value);
               setPrompt('');
             }}
-            className="mt-3 w-full rounded-lg border border-[#fed7aa] bg-white px-3 py-2 text-sm font-semibold text-[#475569] focus:border-[#ffa62b] focus:outline-none"
+            className="mt-3 w-full rounded-lg border border-[#b8d2e8] bg-white px-3 py-2 text-sm font-semibold text-[#486f95] focus:border-[#6ecdf0] focus:outline-none"
           >
             {chatSessions.map((session) => (
               <option key={session.id} value={session.id}>
@@ -936,26 +936,26 @@ export default function Dashboard() {
         </div>
 
         {/* Messages */}
-        <div className="min-h-0 flex-1 space-y-6 overflow-y-auto bg-[#f8f7f5] p-5 [scrollbar-color:#cbd5e1_transparent] [scrollbar-width:thin] [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-[#cbd5e1] [&::-webkit-scrollbar-track]:bg-transparent">
+        <div className="min-h-0 flex-1 space-y-6 overflow-y-auto bg-[#f3faff] p-5 [scrollbar-color:#b8d2e8_transparent] [scrollbar-width:thin] [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-[#b8d2e8] [&::-webkit-scrollbar-track]:bg-transparent">
           {messages.map((message, i) => (
             <div key={i} className={`flex gap-3 ${message.role === 'user' ? 'flex-row-reverse' : ''}`}>
               {message.role === 'assistant' ? (
-                <div className="w-8 h-8 bg-[#ff9429] rounded-lg flex items-center justify-center shrink-0">
+                <div className="w-8 h-8 bg-[#315fae] rounded-lg flex items-center justify-center shrink-0">
                   <span className="text-white text-xs font-bold">AI</span>
                 </div>
               ) : (
-                <div className="w-8 h-8 bg-[#0f172a] rounded-lg flex items-center justify-center shrink-0">
+                <div className="w-8 h-8 bg-[#102a56] rounded-lg flex items-center justify-center shrink-0">
                   <span className="text-xs font-bold text-white">You</span>
                 </div>
               )}
               <div className={`flex-1 ${message.role === 'user' ? 'text-right' : ''}`}>
-                <div className="text-[11px] font-semibold text-[#94a3b8] mb-1">
+                <div className="text-[11px] font-semibold text-[#8ca9c5] mb-1">
                   {message.role === 'assistant' ? 'CoTee AI' : 'You'}
                 </div>
                 <div className={`inline-block rounded-2xl px-4 py-3 ${
                   message.role === 'assistant'
-                    ? 'bg-white border border-[#e2e8f0] rounded-tl-sm text-[#0f172a] shadow-sm'
-                    : 'bg-[#ff9429] text-white rounded-tr-sm shadow-sm'
+                    ? 'bg-white border border-[#c9deef] rounded-tl-sm text-[#102a56] shadow-sm'
+                    : 'bg-[#315fae] text-white rounded-tr-sm shadow-sm'
                 }`}>
                   <p className="text-sm leading-6">{message.content}</p>
                 </div>
@@ -964,15 +964,15 @@ export default function Dashboard() {
           ))}
           {isThinking && (
             <div className="flex gap-3">
-              <div className="w-8 h-8 bg-[#ff9429] rounded-lg flex items-center justify-center shrink-0">
+              <div className="w-8 h-8 bg-[#315fae] rounded-lg flex items-center justify-center shrink-0">
                 <span className="text-white text-xs font-bold">AI</span>
               </div>
               <div className="flex-1">
-                <div className="text-[11px] font-semibold text-[#94a3b8] mb-1">
+                <div className="text-[11px] font-semibold text-[#8ca9c5] mb-1">
                   CoTee AI
                 </div>
-                <div className="inline-block rounded-2xl rounded-tl-sm px-4 py-3 bg-white border border-[#f1f5f9]">
-                  <p className="text-sm text-[#64748b]">Thinking...</p>
+                <div className="inline-block rounded-2xl rounded-tl-sm px-4 py-3 bg-white border border-[#e4f3fc]">
+                  <p className="text-sm text-[#5a7899]">Thinking...</p>
                 </div>
               </div>
             </div>
@@ -980,7 +980,7 @@ export default function Dashboard() {
         </div>
 
         {/* Input */}
-        <div className="shrink-0 bg-white border-t border-[#e2e8f0] p-5 space-y-3">
+        <div className="shrink-0 bg-white border-t border-[#c9deef] p-5 space-y-3">
           <form onSubmit={handleSendMessage} className="relative">
             <textarea
               ref={promptRef}
@@ -989,7 +989,7 @@ export default function Dashboard() {
               onKeyDown={handlePromptKeyDown}
               placeholder="Type a design prompt..."
               disabled={isSubmitting}
-              className="w-full bg-[#f8f7f5] border border-[#e2e8f0] rounded-xl px-4 py-3 pr-24 resize-none focus:outline-none focus:bg-white focus:ring-2 focus:ring-[#ffa62b] transition-all disabled:cursor-not-allowed disabled:opacity-60"
+              className="w-full bg-[#f3faff] border border-[#c9deef] rounded-xl px-4 py-3 pr-24 resize-none focus:outline-none focus:bg-white focus:ring-2 focus:ring-[#6ecdf0] transition-all disabled:cursor-not-allowed disabled:opacity-60"
               rows={2}
               style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}
             />
@@ -997,7 +997,7 @@ export default function Dashboard() {
               type="button"
               onClick={handleGenerateImage}
               disabled={isSubmitting || (!prompt.trim() && messages.length <= 1)}
-              className="absolute right-12 top-2 bg-white text-[#ff9429] p-2 rounded-lg border border-[#fed7aa] hover:bg-[#fff7ed] transition-colors disabled:cursor-not-allowed disabled:opacity-50"
+              className="absolute right-12 top-2 bg-white text-[#315fae] p-2 rounded-lg border border-[#b8d2e8] hover:bg-[#eef8ff] transition-colors disabled:cursor-not-allowed disabled:opacity-50"
               title="Generate image"
               aria-label="Generate image"
             >
@@ -1008,7 +1008,7 @@ export default function Dashboard() {
             <button
               type="submit"
               disabled={isSubmitting || !prompt.trim()}
-              className="absolute right-2 top-2 bg-[#ff9429] text-white p-2 rounded-lg hover:bg-[#ff8c1a] transition-colors disabled:cursor-not-allowed disabled:opacity-50"
+              className="absolute right-2 top-2 bg-[#315fae] text-white p-2 rounded-lg hover:bg-[#244f92] transition-colors disabled:cursor-not-allowed disabled:opacity-50"
               title="Send message"
               aria-label="Send message"
             >
@@ -1021,18 +1021,18 @@ export default function Dashboard() {
       </div>
 
       {/* Main Canvas Area */}
-      <div className="flex min-w-0 flex-col overflow-hidden rounded-r-2xl bg-[#f8f7f5]">
+      <div className="flex min-w-0 flex-col overflow-hidden rounded-r-2xl bg-[#f3faff]">
         {/* Toolbar */}
-        <div className="bg-white border-b border-[#e2e8f0] px-4 py-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="bg-white border-b border-[#c9deef] px-4 py-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex flex-wrap items-center gap-4">
-            <div className="bg-[#f1f5f9] rounded-lg p-1 flex gap-1">
+            <div className="bg-[#e4f3fc] rounded-lg p-1 flex gap-1">
               <button
                 type="button"
                 onClick={() => handleMockupSideChange('front')}
                 className={`px-3 py-1 rounded text-xs font-bold transition-colors ${
                   mockupSide === 'front'
-                    ? 'bg-white text-[#0f172a] shadow-sm'
-                    : 'text-[#64748b] hover:bg-white/50'
+                    ? 'bg-white text-[#102a56] shadow-sm'
+                    : 'text-[#5a7899] hover:bg-white/50'
                 }`}
               >
                 Front
@@ -1042,8 +1042,8 @@ export default function Dashboard() {
                 onClick={() => handleMockupSideChange('back')}
                 className={`px-3 py-1 rounded text-xs font-bold transition-colors ${
                   mockupSide === 'back'
-                    ? 'bg-white text-[#0f172a] shadow-sm'
-                    : 'text-[#64748b] hover:bg-white/50'
+                    ? 'bg-white text-[#102a56] shadow-sm'
+                    : 'text-[#5a7899] hover:bg-white/50'
                 }`}
               >
                 Back
@@ -1054,29 +1054,29 @@ export default function Dashboard() {
             <button
               type="button"
               onClick={handleResetDesign}
-              className="p-2 hover:bg-[#f1f5f9] rounded-lg transition-colors"
+              className="p-2 hover:bg-[#e4f3fc] rounded-lg transition-colors"
               aria-label="Reset design placement"
               title="Reset design placement"
             >
-              <svg className="w-5 h-5 text-[#64748b]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <svg className="w-5 h-5 text-[#5a7899]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
               </svg>
             </button>
             <button
               type="button"
               onClick={handleIncreaseDesignSize}
-              className="p-2 hover:bg-[#f1f5f9] rounded-lg transition-colors"
+              className="p-2 hover:bg-[#e4f3fc] rounded-lg transition-colors"
               aria-label="Increase design size"
               title="Increase design size"
             >
-              <svg className="w-5 h-5 text-[#64748b]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <svg className="w-5 h-5 text-[#5a7899]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
               </svg>
             </button>
             <select
               value={selectedSize}
               onChange={(event) => setSelectedSize(event.target.value)}
-              className="h-10 rounded-lg border border-[#e2e8f0] bg-white px-3 text-sm font-bold text-[#0f172a] focus:border-[#ffa62b] focus:outline-none"
+              className="h-10 rounded-lg border border-[#c9deef] bg-white px-3 text-sm font-bold text-[#102a56] focus:border-[#6ecdf0] focus:outline-none"
               aria-label="Select shirt size"
             >
               {sizes.map((size) => (
@@ -1085,20 +1085,20 @@ export default function Dashboard() {
                 </option>
               ))}
             </select>
-            <div className="inline-grid h-10 grid-cols-[36px_42px_36px] overflow-hidden rounded-lg border border-[#e2e8f0] bg-white">
+            <div className="inline-grid h-10 grid-cols-[36px_42px_36px] overflow-hidden rounded-lg border border-[#c9deef] bg-white">
               <button
                 type="button"
                 onClick={() => setQuantity((current) => Math.max(1, current - 1))}
-                className="grid place-items-center text-[#64748b] hover:bg-[#f8f7f5]"
+                className="grid place-items-center text-[#5a7899] hover:bg-[#f3faff]"
                 aria-label="Decrease quantity"
               >
                 <Minus className="h-4 w-4" />
               </button>
-              <div className="grid place-items-center border-x border-[#e2e8f0] text-sm font-bold text-[#0f172a]">{quantity}</div>
+              <div className="grid place-items-center border-x border-[#c9deef] text-sm font-bold text-[#102a56]">{quantity}</div>
               <button
                 type="button"
                 onClick={() => setQuantity((current) => Math.min(9, current + 1))}
-                className="grid place-items-center text-[#64748b] hover:bg-[#f8f7f5]"
+                className="grid place-items-center text-[#5a7899] hover:bg-[#f3faff]"
                 aria-label="Increase quantity"
               >
                 <Plus className="h-4 w-4" />
@@ -1108,7 +1108,7 @@ export default function Dashboard() {
               type="button"
               onClick={handleAddToCart}
               disabled={isAddingToCart || isGeneratingImage}
-              className="flex h-10 items-center gap-2 rounded-lg bg-[#0f172a] px-4 text-sm font-bold text-white transition-colors hover:bg-[#1e293b] disabled:cursor-not-allowed disabled:opacity-50"
+              className="flex h-10 items-center gap-2 rounded-lg bg-[#102a56] px-4 text-sm font-bold text-white transition-colors hover:bg-[#12315f] disabled:cursor-not-allowed disabled:opacity-50"
               title={`${formatVnd(CUSTOM_TEE_PRICE)} each`}
             >
               <ShoppingBag className="h-4 w-4" />
@@ -1118,7 +1118,7 @@ export default function Dashboard() {
               <button
                 type="button"
                 onClick={() => setIsExportMenuOpen((current) => !current)}
-                className="px-4 py-2 bg-[#ff9429] text-white rounded-lg hover:bg-[#ff8c1a] transition-colors flex items-center gap-2"
+                className="px-4 py-2 bg-[#315fae] text-white rounded-lg hover:bg-[#244f92] transition-colors flex items-center gap-2"
                 aria-expanded={isExportMenuOpen}
               >
                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -1127,25 +1127,25 @@ export default function Dashboard() {
                 <span className="font-bold text-sm">Export</span>
               </button>
               {isExportMenuOpen && (
-                <div className="absolute right-0 top-full z-30 mt-2 w-44 overflow-hidden rounded-xl border border-[#e2e8f0] bg-white py-2 text-sm font-semibold text-[#0f172a] shadow-xl shadow-slate-300/40">
+                <div className="absolute right-0 top-full z-30 mt-2 w-44 overflow-hidden rounded-xl border border-[#c9deef] bg-white py-2 text-sm font-semibold text-[#102a56] shadow-xl shadow-slate-300/40">
                   <button
                     type="button"
                     onClick={handleExportShirt}
-                    className="block w-full px-4 py-2 text-left hover:bg-[#fff7ed] hover:text-[#c2410c]"
+                    className="block w-full px-4 py-2 text-left hover:bg-[#eef8ff] hover:text-[#244f92]"
                   >
                     Save shirt
                   </button>
                   <button
                     type="button"
                     onClick={handleExportDesign}
-                    className="block w-full px-4 py-2 text-left hover:bg-[#fff7ed] hover:text-[#c2410c]"
+                    className="block w-full px-4 py-2 text-left hover:bg-[#eef8ff] hover:text-[#244f92]"
                   >
                     Save design
                   </button>
                   <button
                     type="button"
                     onClick={handleExportBoth}
-                    className="block w-full px-4 py-2 text-left hover:bg-[#fff7ed] hover:text-[#c2410c]"
+                    className="block w-full px-4 py-2 text-left hover:bg-[#eef8ff] hover:text-[#244f92]"
                   >
                     Save both
                   </button>
@@ -1159,7 +1159,7 @@ export default function Dashboard() {
         <div
           className="relative flex-1 flex min-h-[680px] items-center justify-center p-5 pb-32 sm:p-8 lg:min-h-0 lg:p-8 lg:pr-[25rem] xl:pr-[27rem]"
           style={{
-            backgroundImage: `linear-gradient(135deg, rgba(255,245,235,0.8), rgba(248,247,245,0.2)), radial-gradient(circle at 50% 50%, rgba(226,232,240,0.95) 0%, rgba(226,232,240,0) 68%)`,
+            backgroundImage: `linear-gradient(135deg, rgba(234,247,255,0.9), rgba(243,250,255,0.25)), radial-gradient(circle at 50% 50%, rgba(201,222,239,0.95) 0%, rgba(201,222,239,0) 68%)`,
             backgroundSize: 'cover'
           }}
         >
@@ -1169,7 +1169,7 @@ export default function Dashboard() {
               {selectedMockupSrc ? (
                 <img src={selectedMockupSrc} alt="Mockup" className="w-full h-full object-cover object-center" />
               ) : (
-                <div className="flex h-full w-full items-center justify-center bg-[#f8fafc] text-sm font-semibold text-[#64748b]">
+                <div className="flex h-full w-full items-center justify-center bg-[#f3faff] text-sm font-semibold text-[#5a7899]">
                   No mockups found
                 </div>
               )}
@@ -1184,8 +1184,8 @@ export default function Dashboard() {
                 ref={designBoxRef}
                 className={`relative w-full h-full border-2 rounded-lg touch-none select-none ${
                   isCropMode
-                    ? 'cursor-grab border-solid border-[#ff9429] ring-2 ring-[#ff9429]/20'
-                    : `cursor-move border-dashed ${isDesignSelected ? 'border-[rgba(255,148,41,0.4)]' : 'border-transparent'}`
+                    ? 'cursor-grab border-solid border-[#315fae] ring-2 ring-[#315fae]/20'
+                    : `cursor-move border-dashed ${isDesignSelected ? 'border-[rgba(49,95,174,0.4)]' : 'border-transparent'}`
                 }`}
                 style={designSize ? { width: designSize.width, height: designSize.height } : undefined}
                 onDoubleClick={handleDesignDoubleClick}
@@ -1223,7 +1223,7 @@ export default function Dashboard() {
                     />
                   </div>
                   {isCropMode && (
-                    <div className="absolute left-2 top-2 rounded bg-[#ff9429] px-2 py-1 text-[10px] font-bold uppercase tracking-wide text-white pointer-events-none">
+                    <div className="absolute left-2 top-2 rounded bg-[#315fae] px-2 py-1 text-[10px] font-bold uppercase tracking-wide text-white pointer-events-none">
                       Crop
                     </div>
                   )}
@@ -1267,28 +1267,28 @@ export default function Dashboard() {
                       onPointerCancel={handleResizePointerUp}
                     />
                     <div
-                      className="absolute -top-2 -left-2 w-4 h-4 bg-[#ff9429] rounded-full border-2 border-white shadow-lg cursor-nwse-resize z-10"
+                      className="absolute -top-2 -left-2 w-4 h-4 bg-[#315fae] rounded-full border-2 border-white shadow-lg cursor-nwse-resize z-10"
                       onPointerDown={handleResizePointerDown('top-left')}
                       onPointerMove={handleResizePointerMove}
                       onPointerUp={handleResizePointerUp}
                       onPointerCancel={handleResizePointerUp}
                     />
                     <div
-                      className="absolute -top-2 -right-2 w-4 h-4 bg-[#ff9429] rounded-full border-2 border-white shadow-lg cursor-nesw-resize z-10"
+                      className="absolute -top-2 -right-2 w-4 h-4 bg-[#315fae] rounded-full border-2 border-white shadow-lg cursor-nesw-resize z-10"
                       onPointerDown={handleResizePointerDown('top-right')}
                       onPointerMove={handleResizePointerMove}
                       onPointerUp={handleResizePointerUp}
                       onPointerCancel={handleResizePointerUp}
                     />
                     <div
-                      className="absolute -bottom-2 -left-2 w-4 h-4 bg-[#ff9429] rounded-full border-2 border-white shadow-lg cursor-nesw-resize z-10"
+                      className="absolute -bottom-2 -left-2 w-4 h-4 bg-[#315fae] rounded-full border-2 border-white shadow-lg cursor-nesw-resize z-10"
                       onPointerDown={handleResizePointerDown('bottom-left')}
                       onPointerMove={handleResizePointerMove}
                       onPointerUp={handleResizePointerUp}
                       onPointerCancel={handleResizePointerUp}
                     />
                     <div
-                      className="absolute -bottom-2 -right-2 w-4 h-4 bg-[#ff9429] rounded-full border-2 border-white shadow-lg cursor-nwse-resize z-10"
+                      className="absolute -bottom-2 -right-2 w-4 h-4 bg-[#315fae] rounded-full border-2 border-white shadow-lg cursor-nwse-resize z-10"
                       onPointerDown={handleResizePointerDown('bottom-right')}
                       onPointerMove={handleResizePointerMove}
                       onPointerUp={handleResizePointerUp}
@@ -1308,8 +1308,8 @@ export default function Dashboard() {
             />
           </div>
           <div className="absolute bottom-5 left-5 right-5 flex gap-3 overflow-x-auto lg:bottom-10 lg:left-auto lg:right-56 lg:top-14 lg:w-36 lg:overflow-y-auto lg:overflow-x-hidden">
-              <section className="w-36 shrink-0 rounded-xl border border-[#e2e8f0] bg-white/90 p-3 shadow-sm backdrop-blur">
-                <h3 className="mb-2 text-[10px] font-bold uppercase tracking-wide text-[#94a3b8]">Shirts</h3>
+              <section className="w-36 shrink-0 rounded-xl border border-[#c9deef] bg-white/90 p-3 shadow-sm backdrop-blur">
+                <h3 className="mb-2 text-[10px] font-bold uppercase tracking-wide text-[#8ca9c5]">Shirts</h3>
                 {shirtHistory.length > 0 ? (
                   <div className="flex gap-2 lg:block lg:space-y-2">
                     {shirtHistory.map((item) => (
@@ -1319,8 +1319,8 @@ export default function Dashboard() {
                         onClick={() => selectHistoryItem(item)}
                         className={`block h-20 w-20 shrink-0 overflow-hidden rounded-lg border-2 bg-white transition-all lg:h-24 lg:w-full ${
                           selectedMockupSrc === item.src || selectedMockupSrc === item.backSrc
-                            ? 'border-[#ff9429] shadow-md'
-                            : 'border-transparent hover:border-[#cbd5e1]'
+                            ? 'border-[#315fae] shadow-md'
+                            : 'border-transparent hover:border-[#b8d2e8]'
                         }`}
                         title={item.label}
                       >
@@ -1336,15 +1336,15 @@ export default function Dashboard() {
                     ))}
                   </div>
                 ) : (
-                  <div className="grid h-20 w-full place-items-center rounded-lg border border-dashed border-[#cbd5e1] px-3 text-center text-[11px] font-semibold text-[#94a3b8]">
+                  <div className="grid h-20 w-full place-items-center rounded-lg border border-dashed border-[#b8d2e8] px-3 text-center text-[11px] font-semibold text-[#8ca9c5]">
                     No shirt history
                   </div>
                 )}
               </section>
           </div>
           <div className="absolute bottom-5 left-[10.25rem] right-5 flex gap-3 overflow-x-auto lg:bottom-10 lg:left-auto lg:right-8 lg:top-14 lg:w-36 lg:overflow-y-auto lg:overflow-x-hidden">
-              <section className="w-36 shrink-0 rounded-xl border border-[#e2e8f0] bg-white/90 p-3 shadow-sm backdrop-blur">
-                <h3 className="mb-2 text-[10px] font-bold uppercase tracking-wide text-[#94a3b8]">Designs</h3>
+              <section className="w-36 shrink-0 rounded-xl border border-[#c9deef] bg-white/90 p-3 shadow-sm backdrop-blur">
+                <h3 className="mb-2 text-[10px] font-bold uppercase tracking-wide text-[#8ca9c5]">Designs</h3>
                 {designHistory.length > 0 ? (
                   <div className="flex gap-2 lg:block lg:space-y-2">
                     {designHistory.map((item) => (
@@ -1354,8 +1354,8 @@ export default function Dashboard() {
                         onClick={() => selectHistoryItem(item)}
                         className={`block h-20 w-20 shrink-0 overflow-hidden rounded-lg border-2 bg-white transition-all lg:h-24 lg:w-full ${
                           generatedImageSrc === item.src
-                            ? 'border-[#ff9429] shadow-md'
-                            : 'border-transparent hover:border-[#cbd5e1]'
+                            ? 'border-[#315fae] shadow-md'
+                            : 'border-transparent hover:border-[#b8d2e8]'
                         }`}
                         title={item.label}
                       >
@@ -1371,7 +1371,7 @@ export default function Dashboard() {
                     ))}
                   </div>
                 ) : (
-                  <div className="grid h-20 w-full place-items-center rounded-lg border border-dashed border-[#cbd5e1] px-3 text-center text-[11px] font-semibold text-[#94a3b8]">
+                  <div className="grid h-20 w-full place-items-center rounded-lg border border-dashed border-[#b8d2e8] px-3 text-center text-[11px] font-semibold text-[#8ca9c5]">
                     No design history
                   </div>
                 )}

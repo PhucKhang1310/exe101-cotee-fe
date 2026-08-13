@@ -4,17 +4,17 @@ export default function About() {
       <div className="max-w-[1280px] mx-auto px-8">
         {/* Header */}
         <div className="text-center mb-20">
-          <h1 className="text-6xl font-bold text-[#0f172a] mb-6" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
+          <h1 className="text-6xl font-bold text-[#102a56] mb-6" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
             About CoTee
           </h1>
-          <p className="text-xl text-[#64748b] max-w-3xl mx-auto">
+          <p className="text-xl text-[#5a7899] max-w-3xl mx-auto">
             We're on a mission to democratize design creation with AI technology
           </p>
         </div>
 
         {/* Story Section */}
         <div className="bg-white rounded-3xl p-16 mb-16 shadow-lg">
-          <div className="max-w-4xl mx-auto space-y-6 text-lg text-[#475569] leading-relaxed">
+          <div className="max-w-4xl mx-auto space-y-6 text-lg text-[#486f95] leading-relaxed">
             <p>
               CoTee was founded in 2024 with a simple vision: to make professional design accessible to everyone. We believe that great ideas shouldn't be limited by design skills or expensive software.
             </p>
@@ -29,7 +29,7 @@ export default function About() {
 
         {/* Values */}
         <div className="mb-20">
-          <h2 className="text-4xl font-bold text-center text-[#0f172a] mb-12" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
+          <h2 className="text-4xl font-bold text-center text-[#102a56] mb-12" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
             Our Values
           </h2>
           <div className="grid grid-cols-3 gap-8">
@@ -50,12 +50,12 @@ export default function About() {
                 description: 'We\'re building a supportive community of creators who inspire and help each other.'
               }
             ].map((value, i) => (
-              <div key={i} className="bg-white rounded-2xl p-8 text-center border border-[#f1f5f9] hover:border-[#ffa62b] hover:shadow-xl transition-all">
+              <div key={i} className="bg-white rounded-2xl p-8 text-center border border-[#e4f3fc] hover:border-[#6ecdf0] hover:shadow-xl transition-all">
                 <div className="text-6xl mb-4">{value.icon}</div>
-                <h3 className="text-2xl font-bold text-[#0f172a] mb-3" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
+                <h3 className="text-2xl font-bold text-[#102a56] mb-3" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
                   {value.title}
                 </h3>
-                <p className="text-[#64748b]">{value.description}</p>
+                <p className="text-[#5a7899]">{value.description}</p>
               </div>
             ))}
           </div>
@@ -63,7 +63,7 @@ export default function About() {
 
         {/* Team */}
         <div className="mb-20">
-          <h2 className="text-4xl font-bold text-center text-[#0f172a] mb-12" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
+          <h2 className="text-4xl font-bold text-center text-[#102a56] mb-12" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
             Our Team
           </h2>
           <div className="space-y-10">
@@ -71,8 +71,8 @@ export default function About() {
               <div className="w-40 h-40 mx-auto mb-4 bg-gradient-to-br from-[#2563c9] to-[#8dc3f7] rounded-2xl flex items-center justify-center text-6xl group-hover:scale-105 transition-transform">
                 👨‍💼
               </div>
-              <h3 className="font-bold text-[#0f172a] mb-1">Huynh Kha Tu</h3>
-              <p className="text-sm font-semibold text-[#ff9429]">CEO</p>
+              <h3 className="font-bold text-[#102a56] mb-1">Huynh Kha Tu</h3>
+              <p className="text-sm font-semibold text-[#315fae]">CEO</p>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-8">
@@ -84,11 +84,11 @@ export default function About() {
                 { name: 'Pham Quoc Duy', role: 'Marketing', avatar: '📣' }
               ].map((member, i) => (
                 <div key={i} className="text-center group">
-                  <div className="w-32 h-32 mx-auto mb-4 bg-gradient-to-br from-[#fff5eb] to-[#dbeafe] rounded-2xl flex items-center justify-center text-5xl group-hover:scale-105 transition-transform">
+                  <div className="w-32 h-32 mx-auto mb-4 bg-gradient-to-br from-[#eaf7ff] to-[#dbeafe] rounded-2xl flex items-center justify-center text-5xl group-hover:scale-105 transition-transform">
                     {member.avatar}
                   </div>
-                  <h3 className="font-bold text-[#0f172a] mb-1">{member.name}</h3>
-                  <p className="text-sm text-[#64748b]">{member.role}</p>
+                  <h3 className="font-bold text-[#102a56] mb-1">{member.name}</h3>
+                  <p className="text-sm text-[#5a7899]">{member.role}</p>
                 </div>
               ))}
             </div>
@@ -96,7 +96,7 @@ export default function About() {
         </div>
 
         {/* Stats */}
-        <div className="bg-gradient-to-br from-[#ff9429] to-[#ff7b00] rounded-3xl p-16">
+        <div className="bg-gradient-to-br from-[#315fae] to-[#12315f] rounded-3xl p-16">
           <div className="grid grid-cols-4 gap-8 text-center text-white">
             {[
               { number: '10,000+', label: 'Designs Created' },

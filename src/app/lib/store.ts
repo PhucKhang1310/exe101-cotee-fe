@@ -30,7 +30,7 @@ function normalizeCartItem(item: CartItem): CartItem {
         ? item.image
         : '',
     size: String(item.size),
-    color: String(item.color || '#ff9429'),
+    color: String(item.color || '#315fae'),
     quantity: Number(item.quantity) || 1,
   };
 }

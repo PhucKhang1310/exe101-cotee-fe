@@ -105,24 +105,24 @@ export default function AdminUsers() {
       <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <h2 className="text-3xl font-extrabold">User Management</h2>
-          <p className="mt-2 text-sm text-[#64748b]">Manage accounts, roles, verification, and access status.</p>
+          <p className="mt-2 text-sm text-[#5a7899]">Manage accounts, roles, verification, and access status.</p>
         </div>
-        <button onClick={openCreate} className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#ff9429] px-5 py-3 text-sm font-bold text-white">
+        <button onClick={openCreate} className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#315fae] px-5 py-3 text-sm font-bold text-white">
           <Plus className="h-4 w-4" /> Add user
         </button>
       </div>
 
-      {notice && <div className="mt-5 rounded-xl border border-[#fed7aa] bg-[#fff7ed] px-4 py-3 text-sm text-[#c2410c]">{notice}</div>}
+      {notice && <div className="mt-5 rounded-xl border border-[#b8d2e8] bg-[#eef8ff] px-4 py-3 text-sm text-[#244f92]">{notice}</div>}
 
-      <label className="mt-6 flex max-w-xl items-center gap-3 rounded-xl border border-[#e2e8f0] bg-white px-4 py-3">
-        <Search className="h-5 w-5 text-[#94a3b8]" />
+      <label className="mt-6 flex max-w-xl items-center gap-3 rounded-xl border border-[#c9deef] bg-white px-4 py-3">
+        <Search className="h-5 w-5 text-[#8ca9c5]" />
         <input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search name, email, or role" className="min-w-0 flex-1 outline-none" />
       </label>
 
-      <section className="mt-5 overflow-hidden rounded-2xl border border-[#e2e8f0] bg-white shadow-sm">
+      <section className="mt-5 overflow-hidden rounded-2xl border border-[#c9deef] bg-white shadow-sm">
         <div className="overflow-x-auto">
           <table className="w-full min-w-[850px] text-left text-sm">
-            <thead className="bg-[#f8fafc] text-xs uppercase text-[#64748b]">
+            <thead className="bg-[#f3faff] text-xs uppercase text-[#5a7899]">
               <tr>
                 <th className="px-5 py-4">User</th><th className="px-5 py-4">Role</th>
                 <th className="px-5 py-4">Email</th><th className="px-5 py-4">Status</th>
@@ -132,7 +132,7 @@ export default function AdminUsers() {
             <tbody>
               {loading
                 ? Array.from({ length: 6 }).map((_, i) => (
-                    <tr key={i} className="border-t border-[#f1f5f9]">
+                    <tr key={i} className="border-t border-[#e4f3fc]">
                       <td className="px-5 py-4"><Skeleton className="h-4 w-32" /></td>
                       <td className="px-5 py-4"><Skeleton className="h-4 w-16" /></td>
                       <td className="px-5 py-4">
@@ -149,7 +149,7 @@ export default function AdminUsers() {
                     </tr>
                   ))
                 : filteredUsers.map((user) => (
-                  <tr key={user.id} className="border-t border-[#f1f5f9]">
+                  <tr key={user.id} className="border-t border-[#e4f3fc]">
                     <td className="px-5 py-4 font-bold">{user.fullName}</td>
                     <td className="px-5 py-4">{user.role}</td>
                     <td className="px-5 py-4">
@@ -163,11 +163,11 @@ export default function AdminUsers() {
                         {user.isActive ? 'Active' : 'Inactive'}
                       </span>
                     </td>
-                    <td className="px-5 py-4 text-[#64748b]">{new Date(user.createdAt).toLocaleDateString()}</td>
+                    <td className="px-5 py-4 text-[#5a7899]">{new Date(user.createdAt).toLocaleDateString()}</td>
                     <td className="px-5 py-4">
                       <div className="flex justify-end gap-1">
                         <button onClick={() => openEdit(user)} className="rounded-lg p-2 hover:bg-blue-50" title="Edit"><Pencil className="h-4 w-4" /></button>
-                        <button onClick={() => void toggleStatus(user)} className="rounded-lg p-2 hover:bg-orange-50" title="Toggle status"><Power className="h-4 w-4" /></button>
+                        <button onClick={() => void toggleStatus(user)} className="rounded-lg p-2 hover:bg-blue-50" title="Toggle status"><Power className="h-4 w-4" /></button>
                         <button onClick={() => void remove(user)} className="rounded-lg p-2 text-red-500 hover:bg-red-50" title="Disable"><Trash2 className="h-4 w-4" /></button>
                       </div>
                     </td>
@@ -176,7 +176,7 @@ export default function AdminUsers() {
             </tbody>
           </table>
         </div>
-        <div className="border-t border-[#e2e8f0] px-5 py-4 text-sm text-[#64748b]">
+        <div className="border-t border-[#c9deef] px-5 py-4 text-sm text-[#5a7899]">
           {loading ? <Skeleton className="h-4 w-36" /> : `${filteredUsers.length} of ${users.length} users`}
         </div>
       </section>
@@ -198,7 +198,7 @@ export default function AdminUsers() {
                 </select>
               )}
             </div>
-            <button disabled={saving} className="mt-6 w-full rounded-xl bg-[#ff9429] px-5 py-3 font-bold text-white disabled:opacity-60">
+            <button disabled={saving} className="mt-6 w-full rounded-xl bg-[#315fae] px-5 py-3 font-bold text-white disabled:opacity-60">
               {saving ? 'Saving...' : 'Save user'}
             </button>
           </form>

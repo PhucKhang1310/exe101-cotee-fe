@@ -21,7 +21,7 @@ function mapApiCartItem(item: ApiCartItem): CartItem {
     price: item.price,
     image: item.imageUrl || getTeeProductImage(item.productId),
     size: item.size,
-    color: '#ff9429',
+    color: '#315fae',
     quantity: item.quantity,
   };
 }
@@ -143,32 +143,32 @@ export default function Cart() {
       <div className="max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-8">
         <div className="mb-10 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <h1 className="text-5xl font-bold text-[#0f172a]" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
+            <h1 className="text-5xl font-bold text-[#102a56]" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
               Your Cart
             </h1>
-            <p className="mt-3 text-[#64748b]">Review selected apparel before checkout.</p>
+            <p className="mt-3 text-[#5a7899]">Review selected apparel before checkout.</p>
           </div>
-          <Link to="/browse" className="inline-flex items-center justify-center rounded-xl border border-[#e2e8f0] bg-white px-5 py-3 text-sm font-bold text-[#0f172a] hover:border-[#ffa62b]">
+          <Link to="/browse" className="inline-flex items-center justify-center rounded-xl border border-[#c9deef] bg-white px-5 py-3 text-sm font-bold text-[#102a56] hover:border-[#6ecdf0]">
             Continue shopping
           </Link>
         </div>
 
         {notice && (
-          <div className="mb-6 rounded-xl border border-[#fed7aa] bg-[#fff7ed] px-4 py-3 text-sm font-semibold text-[#c2410c]">
+          <div className="mb-6 rounded-xl border border-[#b8d2e8] bg-[#eef8ff] px-4 py-3 text-sm font-semibold text-[#244f92]">
             {notice}
           </div>
         )}
 
         {items.length === 0 ? (
-          <div className="rounded-3xl border border-[#e2e8f0] bg-white p-12 text-center shadow-sm">
-            <div className="mx-auto mb-5 grid h-16 w-16 place-items-center rounded-2xl bg-[#fff5eb] text-[#ff9429]">
+          <div className="rounded-3xl border border-[#c9deef] bg-white p-12 text-center shadow-sm">
+            <div className="mx-auto mb-5 grid h-16 w-16 place-items-center rounded-2xl bg-[#eaf7ff] text-[#315fae]">
               <ShoppingBag className="h-8 w-8" />
             </div>
-            <h2 className="text-2xl font-bold text-[#0f172a]">Your cart is empty</h2>
-            <p className="mx-auto mt-3 max-w-md text-[#64748b]">
+            <h2 className="text-2xl font-bold text-[#102a56]">Your cart is empty</h2>
+            <p className="mx-auto mt-3 max-w-md text-[#5a7899]">
               Browse designs and add a product to start an order.
             </p>
-            <Link to="/browse" className="mt-6 inline-flex rounded-xl bg-[#ff9429] px-6 py-3 font-bold text-white hover:bg-[#ff8c1a]">
+            <Link to="/browse" className="mt-6 inline-flex rounded-xl bg-[#315fae] px-6 py-3 font-bold text-white hover:bg-[#244f92]">
               Browse products
             </Link>
           </div>
@@ -176,41 +176,41 @@ export default function Cart() {
           <div className="grid grid-cols-1 gap-8 lg:grid-cols-[minmax(0,1fr)_360px]">
             <div className="space-y-4">
               {items.map((item) => (
-                <div key={item.id} className="grid grid-cols-[112px_minmax(0,1fr)] gap-5 rounded-2xl border border-[#e2e8f0] bg-white p-4 shadow-sm">
-                  <div className="aspect-square overflow-hidden rounded-xl bg-[#f8f7f5]">
+                <div key={item.id} className="grid grid-cols-[112px_minmax(0,1fr)] gap-5 rounded-2xl border border-[#c9deef] bg-white p-4 shadow-sm">
+                  <div className="aspect-square overflow-hidden rounded-xl bg-[#f3faff]">
                     <img src={item.image || getTeeProductImage(item.productId)} alt={item.name} className="h-full w-full object-cover" />
                   </div>
                   <div className="min-w-0">
                     <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                       <div>
-                        <h2 className="font-bold text-[#0f172a]">{item.name}</h2>
-                        <p className="mt-1 text-sm text-[#64748b]">{item.category}</p>
-                        <div className="mt-3 flex flex-wrap items-center gap-3 text-sm text-[#64748b]">
+                        <h2 className="font-bold text-[#102a56]">{item.name}</h2>
+                        <p className="mt-1 text-sm text-[#5a7899]">{item.category}</p>
+                        <div className="mt-3 flex flex-wrap items-center gap-3 text-sm text-[#5a7899]">
                           <span>Size {item.size}</span>
                           <span className="inline-flex items-center gap-2">
                             Color
-                            <span className="h-4 w-4 rounded-full border border-[#e2e8f0]" style={{ backgroundColor: item.color }} />
+                            <span className="h-4 w-4 rounded-full border border-[#c9deef]" style={{ backgroundColor: item.color }} />
                           </span>
                         </div>
                       </div>
-                      <div className="text-lg font-bold text-[#0f172a]">{formatVnd(item.price * item.quantity)}</div>
+                      <div className="text-lg font-bold text-[#102a56]">{formatVnd(item.price * item.quantity)}</div>
                     </div>
 
                     <div className="mt-5 flex items-center justify-between">
-                      <div className="inline-grid h-10 grid-cols-[40px_48px_40px] overflow-hidden rounded-lg border border-[#e2e8f0] bg-white">
+                      <div className="inline-grid h-10 grid-cols-[40px_48px_40px] overflow-hidden rounded-lg border border-[#c9deef] bg-white">
                         <button
                           type="button"
                           onClick={() => updateQuantity(item.id, item.quantity - 1)}
-                          className="grid place-items-center text-[#64748b] hover:bg-[#f8f7f5]"
+                          className="grid place-items-center text-[#5a7899] hover:bg-[#f3faff]"
                           aria-label="Decrease quantity"
                         >
                           <Minus className="h-4 w-4" />
                         </button>
-                        <div className="grid place-items-center border-x border-[#e2e8f0] text-sm font-bold text-[#0f172a]">{item.quantity}</div>
+                        <div className="grid place-items-center border-x border-[#c9deef] text-sm font-bold text-[#102a56]">{item.quantity}</div>
                         <button
                           type="button"
                           onClick={() => updateQuantity(item.id, item.quantity + 1)}
-                          className="grid place-items-center text-[#64748b] hover:bg-[#f8f7f5]"
+                          className="grid place-items-center text-[#5a7899] hover:bg-[#f3faff]"
                           aria-label="Increase quantity"
                         >
                           <Plus className="h-4 w-4" />
@@ -230,18 +230,18 @@ export default function Cart() {
               ))}
             </div>
 
-            <aside className="h-fit rounded-2xl border border-[#e2e8f0] bg-white p-6 shadow-sm">
-              <h2 className="text-xl font-bold text-[#0f172a]">Order summary</h2>
+            <aside className="h-fit rounded-2xl border border-[#c9deef] bg-white p-6 shadow-sm">
+              <h2 className="text-xl font-bold text-[#102a56]">Order summary</h2>
               <div className="mt-6 space-y-3 text-sm">
-                <div className="flex justify-between text-[#64748b]">
+                <div className="flex justify-between text-[#5a7899]">
                   <span>Subtotal</span>
                   <span>{formatVnd(subtotal)}</span>
                 </div>
-                <div className="flex justify-between text-[#64748b]">
+                <div className="flex justify-between text-[#5a7899]">
                   <span>Shipping</span>
                   <span>Free</span>
                 </div>
-                <div className="border-t border-[#e2e8f0] pt-3 flex justify-between text-lg font-bold text-[#0f172a]">
+                <div className="border-t border-[#c9deef] pt-3 flex justify-between text-lg font-bold text-[#102a56]">
                   <span>Total</span>
                   <span>{formatVnd(total)}</span>
                 </div>
@@ -254,7 +254,7 @@ export default function Cart() {
                   placeholder="Full name"
                   autoComplete="name"
                   required
-                  className="w-full rounded-xl border border-[#e2e8f0] bg-white px-4 py-3 text-sm focus:border-[#ffa62b] focus:outline-none"
+                  className="w-full rounded-xl border border-[#c9deef] bg-white px-4 py-3 text-sm focus:border-[#6ecdf0] focus:outline-none"
                 />
                 <input
                   type="tel"
@@ -263,7 +263,7 @@ export default function Cart() {
                   placeholder="Phone number"
                   autoComplete="tel"
                   required
-                  className="w-full rounded-xl border border-[#e2e8f0] bg-white px-4 py-3 text-sm focus:border-[#ffa62b] focus:outline-none"
+                  className="w-full rounded-xl border border-[#c9deef] bg-white px-4 py-3 text-sm focus:border-[#6ecdf0] focus:outline-none"
                 />
                 <textarea
                   value={address}
@@ -272,12 +272,12 @@ export default function Cart() {
                   autoComplete="street-address"
                   required
                   rows={3}
-                  className="w-full resize-none rounded-xl border border-[#e2e8f0] bg-white px-4 py-3 text-sm focus:border-[#ffa62b] focus:outline-none"
+                  className="w-full resize-none rounded-xl border border-[#c9deef] bg-white px-4 py-3 text-sm focus:border-[#6ecdf0] focus:outline-none"
                 />
                 <button
                   type="submit"
                   disabled={isCheckingOut}
-                  className="w-full rounded-xl bg-[#ff9429] px-6 py-4 font-bold text-white shadow-lg shadow-orange-200 hover:bg-[#ff8c1a] disabled:cursor-not-allowed disabled:opacity-60"
+                  className="w-full rounded-xl bg-[#315fae] px-6 py-4 font-bold text-white shadow-lg shadow-blue-200 hover:bg-[#244f92] disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   {isCheckingOut ? 'Opening MoMo...' : 'Pay with MoMo'}
                 </button>
@@ -285,7 +285,7 @@ export default function Cart() {
               <button
                 type="button"
                 onClick={clearCart}
-                className="mt-3 w-full rounded-xl border border-[#e2e8f0] bg-white px-6 py-3 font-bold text-[#0f172a] hover:border-[#ffa62b] hover:bg-[#fff5eb]"
+                className="mt-3 w-full rounded-xl border border-[#c9deef] bg-white px-6 py-3 font-bold text-[#102a56] hover:border-[#6ecdf0] hover:bg-[#eaf7ff]"
               >
                 Clear cart
               </button>

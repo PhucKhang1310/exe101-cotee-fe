@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react';
 import { Banknote, Package, ShoppingBag, Users } from 'lucide-react';
 import { Link } from 'react-router';
-import { getProducts, type ApiProduct } from '../../lib/api';
-import { getAdminOrders, getAdminUsers, type AdminOrder, type AdminUser } from '../../lib/adminApi';
+import type { ApiProduct } from '../../lib/api';
+import { getAdminOrders, getAdminProductSummaries, getAdminUsers, type AdminOrder, type AdminUser } from '../../lib/adminApi';
 import { formatVnd } from '../../lib/commerce';
 import { Skeleton } from '../../components/ui/skeleton';
 
@@ -15,7 +15,7 @@ export default function AdminDashboard() {
 
   useEffect(() => {
     setLoading(true);
-    Promise.all([getAdminUsers(), getProducts(), getAdminOrders()])
+    Promise.all([getAdminUsers(), getAdminProductSummaries(), getAdminOrders()])
       .then(([userResponse, productResponse, orderResponse]) => {
         setUsers(userResponse.items);
         setProducts(productResponse);

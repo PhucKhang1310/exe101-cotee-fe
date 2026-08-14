@@ -21,6 +21,10 @@ export type PagedUsers = {
 export type OrderItem = ApiOrderItem;
 export type AdminOrder = ApiOrder;
 
+export function getAdminProductSummaries(): Promise<ApiProduct[]> {
+  return request('/api/Products/admin-summary');
+}
+
 export function getAdminUsers(page = 1, pageSize = 100): Promise<PagedUsers> {
   return request(`/api/admin/users?page=${page}&pageSize=${pageSize}`);
 }

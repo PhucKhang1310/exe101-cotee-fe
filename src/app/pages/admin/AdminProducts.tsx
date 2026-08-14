@@ -2,9 +2,9 @@ import { type FormEvent, useCallback, useEffect, useMemo, useRef, useState } fro
 import Cropper from 'react-easy-crop';
 import type { Area } from 'react-easy-crop';
 import { Pencil, Plus, Search, Trash2, X } from 'lucide-react';
-import { getProducts, type ApiProduct } from '../../lib/api';
-import { createProduct, deleteProduct, updateProduct } from '../../lib/adminApi';
-import { formatVnd, getTeeProductImage } from '../../lib/commerce';
+import { getProduct, type ApiProduct } from '../../lib/api';
+import { createProduct, deleteProduct, getAdminProductSummaries, updateProduct } from '../../lib/adminApi';
+import { formatVnd, getProductImageThumbnail, getTeeProductImage } from '../../lib/commerce';
 import { Skeleton } from '../../components/ui/skeleton';
 
 
@@ -147,13 +147,14 @@ export default function AdminProducts() {
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [editing, setEditing] = useState<ApiProduct | null>(null);
+  const [openingProductId, setOpeningProductId] = useState('');
   const [form, setForm] = useState(emptyForm);
   const [showCropEditor, setShowCropEditor] = useState(false);
   const [cropVersion, setCropVersion] = useState(0); // bump to re-read localStorage
 
   const load = async () => {
     setLoading(true);
-    try { setProducts(await getProducts()); setNotice(''); }
+    try { setProducts(await getAdminProductSummaries()); setNotice(''); }
     catch (error) { setNotice(error instanceof Error ? error.message : 'Unable to load products.'); }
     finally { setLoading(false); }
   };
@@ -162,12 +163,32 @@ export default function AdminProducts() {
   const visible = useMemo(() => products.filter((product) =>
     product.name.toLowerCase().includes(search.trim().toLowerCase())), [products, search]);
 
-  const openForm = (product?: ApiProduct) => {
-    setEditing(product ?? null);
-    setForm(product ? {
-      name: product.name, imageUrl: product.imageUrl ?? '',
-      price: String(product.price), stock: String(product.stock),
-    } : emptyForm);
+  const openForm = async (product?: ApiProduct) => {
+    if (!product) {
+      setEditing(null);
+      setForm(emptyForm);
+      setShowForm(true);
+      return;
+    }
+
+    setOpeningProductId(product.id);
+    try {
+      const fullProduct = await getProduct(product.id);
+      setEditing(fullProduct);
+      setForm({
+        name: fullProduct.name,
+        imageUrl: fullProduct.imageUrl ?? '',
+        price: String(fullProduct.price),
+        stock: String(fullProduct.stock),
+      });
+      setNotice('');
+    } catch (error) {
+      setNotice(error instanceof Error ? error.message : 'Unable to load product details.');
+      return;
+    } finally {
+      setOpeningProductId('');
+    }
+
     setShowForm(true);
   };
 
@@ -195,7 +216,7 @@ export default function AdminProducts() {
     <div className="mx-auto max-w-[1440px]">
       <div className="flex items-end justify-between gap-4">
         <div><h2 className="text-3xl font-extrabold">Product Management</h2><p className="mt-2 text-sm text-[#5a7899]">Create products and control pricing and stock.</p></div>
-        <button onClick={() => openForm()} className="inline-flex items-center gap-2 rounded-xl bg-[#315fae] px-5 py-3 font-bold text-white"><Plus className="h-4 w-4" /> Add product</button>
+        <button onClick={() => void openForm()} className="inline-flex items-center gap-2 rounded-xl bg-[#315fae] px-5 py-3 font-bold text-white"><Plus className="h-4 w-4" /> Add product</button>
       </div>
       {notice && <div className="mt-5 rounded-xl bg-blue-50 px-4 py-3 text-sm text-blue-700">{notice}</div>}
       <label className="mt-6 flex max-w-xl items-center gap-3 rounded-xl border bg-white px-4 py-3"><Search className="h-5 w-5 text-slate-400" /><input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search products" className="flex-1 outline-none" /></label>
@@ -221,7 +242,8 @@ export default function AdminProducts() {
           : visible.map((product) => {
             // Prefer locally-cropped version, fall back to remote imageUrl, then mockup
             const rawUrl = product.imageUrl || getTeeProductImage(product.id);
-            const imageUrl = getCrop(product.id) || rawUrl;
+            const imageUrl = getProductImageThumbnail(getCrop(product.id) || rawUrl, 420);
+            const isOpening = openingProductId === product.id;
             return (
               <article key={product.id} className="rounded-2xl border bg-white p-5 shadow-sm">
                 <div className="aspect-square overflow-hidden rounded-xl border border-slate-100 bg-slate-50">
@@ -249,8 +271,12 @@ export default function AdminProducts() {
                   </span>
                 </div>
                 <div className="mt-4 flex gap-2">
-                  <button onClick={() => openForm(product)} className="flex flex-1 items-center justify-center gap-2 rounded-xl border px-4 py-2 font-semibold">
-                    <Pencil className="h-4 w-4" /> Edit
+                  <button
+                    onClick={() => void openForm(product)}
+                    disabled={isOpening}
+                    className="flex flex-1 items-center justify-center gap-2 rounded-xl border px-4 py-2 font-semibold disabled:cursor-wait disabled:opacity-60"
+                  >
+                    <Pencil className="h-4 w-4" /> {isOpening ? 'Opening...' : 'Edit'}
                   </button>
                   <button onClick={() => void remove(product)} className="rounded-xl border px-3 text-red-500">
                     <Trash2 className="h-4 w-4" />
@@ -277,7 +303,7 @@ export default function AdminProducts() {
                 <div className="flex items-center gap-3 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3">
                   <div className="h-12 w-12 shrink-0 overflow-hidden rounded-lg border border-slate-200 bg-white">
                     <img
-                      src={getCrop(editingId) || formImageUrl}
+                      src={getProductImageThumbnail(getCrop(editingId) || formImageUrl, 96)}
                       alt=""
                       className="h-full w-full object-cover"
                     />

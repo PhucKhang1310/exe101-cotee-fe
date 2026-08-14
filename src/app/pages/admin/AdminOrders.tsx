@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Ban, Check, RefreshCw, RotateCcw, Save, Search, X } from 'lucide-react';
-import { getProducts, type ApiProduct } from '../../lib/api';
-import { cancelOrder, getAdminOrders, updateOrderStatus, type AdminOrder } from '../../lib/adminApi';
-import { formatVnd, getTeeProductImage } from '../../lib/commerce';
+import type { ApiProduct } from '../../lib/api';
+import { cancelOrder, getAdminOrders, getAdminProductSummaries, updateOrderStatus, type AdminOrder } from '../../lib/adminApi';
+import { formatVnd, getProductImageThumbnail, getTeeProductImage } from '../../lib/commerce';
 import { Skeleton } from '../../components/ui/skeleton';
 
 const orderStatuses = ['Pending', 'Processing', 'Shipping', 'Completed', 'Cancelled'];
@@ -133,7 +133,7 @@ export default function AdminOrders() {
   const load = async () => {
     setLoading(true);
     try {
-      const [nextOrders, nextProducts] = await Promise.all([getAdminOrders(), getProducts()]);
+      const [nextOrders, nextProducts] = await Promise.all([getAdminOrders(), getAdminProductSummaries()]);
       setOrders(nextOrders);
       setProducts(nextProducts);
       setDrafts({});
@@ -339,7 +339,7 @@ export default function AdminOrders() {
                       <div className="space-y-3">
                         {order.items.map((item) => {
                           const product = productMap.get(item.productId);
-                          const imageUrl = product?.imageUrl || getTeeProductImage(item.productId);
+                          const imageUrl = getProductImageThumbnail(product?.imageUrl || getTeeProductImage(item.productId), 320);
 
                           return (
                             <div key={`${item.productId}-${item.size}`} className="w-[280px] rounded-lg border border-slate-100 bg-slate-50/70 p-3">

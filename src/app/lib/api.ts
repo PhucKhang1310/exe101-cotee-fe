@@ -8,6 +8,8 @@ export type ApiProduct = {
   id: string;
   name: string;
   imageUrl?: string | null;
+  imageThumbnailUrl?: string | null;
+  hasInlineImage?: boolean;
   price: number;
   stock: number;
 };
@@ -175,10 +177,16 @@ export async function getProduct(id: string): Promise<ApiProduct> {
   return request<ApiProduct>(`/api/Products/${encodeURIComponent(id)}`);
 }
 
-export async function createProduct(name: string, price: number, stock: number, imageUrl?: string): Promise<ApiProduct> {
+export async function createProduct(
+  name: string,
+  price: number,
+  stock: number,
+  imageUrl?: string,
+  imageThumbnailUrl?: string,
+): Promise<ApiProduct> {
   return request<ApiProduct>('/api/Products', {
     method: 'POST',
-    body: JSON.stringify({ name, price, stock, imageUrl }),
+    body: JSON.stringify({ name, price, stock, imageUrl, imageThumbnailUrl }),
   });
 }
 

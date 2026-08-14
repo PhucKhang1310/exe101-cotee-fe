@@ -35,3 +35,30 @@ export function getProductImageThumbnail(imageUrl: string, size = 360): string {
 
   return `${prefix}${transformation}/${publicPath}`;
 }
+
+export function createImageThumbnailDataUrl(imageUrl: string, size = 420): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const image = new Image();
+    image.crossOrigin = 'anonymous';
+    image.onload = () => {
+      const canvas = document.createElement('canvas');
+      canvas.width = size;
+      canvas.height = size;
+      const context = canvas.getContext('2d');
+      if (!context) {
+        reject(new Error('Unable to create image thumbnail.'));
+        return;
+      }
+
+      const scale = Math.max(size / image.naturalWidth, size / image.naturalHeight);
+      const width = image.naturalWidth * scale;
+      const height = image.naturalHeight * scale;
+      context.fillStyle = '#ffffff';
+      context.fillRect(0, 0, size, size);
+      context.drawImage(image, (size - width) / 2, (size - height) / 2, width, height);
+      resolve(canvas.toDataURL('image/jpeg', 0.82));
+    };
+    image.onerror = () => reject(new Error('Unable to load image thumbnail source.'));
+    image.src = imageUrl;
+  });
+}

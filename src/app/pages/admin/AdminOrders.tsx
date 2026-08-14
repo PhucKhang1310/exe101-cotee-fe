@@ -339,7 +339,10 @@ export default function AdminOrders() {
                       <div className="space-y-3">
                         {order.items.map((item) => {
                           const product = productMap.get(item.productId);
-                          const imageUrl = getProductImageThumbnail(product?.imageUrl || getTeeProductImage(item.productId), 320);
+                          const imageUrl = getProductImageThumbnail(
+                            product?.imageThumbnailUrl || product?.imageUrl || getTeeProductImage(item.productId),
+                            320,
+                          );
 
                           return (
                             <div key={`${item.productId}-${item.size}`} className="w-[280px] rounded-lg border border-slate-100 bg-slate-50/70 p-3">

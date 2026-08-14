@@ -4,7 +4,7 @@ import type { Area } from 'react-easy-crop';
 import { Pencil, Plus, Search, Trash2, X } from 'lucide-react';
 import { getProduct, type ApiProduct } from '../../lib/api';
 import { createProduct, deleteProduct, getAdminProductSummaries, updateProduct } from '../../lib/adminApi';
-import { formatVnd, getProductImageThumbnail, getTeeProductImage } from '../../lib/commerce';
+import { createImageThumbnailDataUrl, formatVnd, getProductImageThumbnail, getTeeProductImage } from '../../lib/commerce';
 import { Skeleton } from '../../components/ui/skeleton';
 
 
@@ -13,6 +13,7 @@ import { Skeleton } from '../../components/ui/skeleton';
 // On "Apply", the crop is rasterised to canvas and stored as a data URL in LS.
 
 const CROP_LS_KEY = 'cotee_product_crop';
+const INLINE_THUMBNAILS_LS_KEY = 'cotee_admin_product_inline_thumbnails';
 
 function loadCrops(): Record<string, string> {
   try { return JSON.parse(localStorage.getItem(CROP_LS_KEY) ?? '{}') as Record<string, string>; }
@@ -23,6 +24,74 @@ function saveCrop(productId: string, dataUrl: string) {
 }
 function getCrop(productId: string): string | null {
   return loadCrops()[productId] ?? null;
+}
+
+function loadInlineThumbnails(): Record<string, string> {
+  try { return JSON.parse(localStorage.getItem(INLINE_THUMBNAILS_LS_KEY) ?? '{}') as Record<string, string>; }
+  catch { return {}; }
+}
+
+function saveInlineThumbnails(thumbnails: Record<string, string>) {
+  try { localStorage.setItem(INLINE_THUMBNAILS_LS_KEY, JSON.stringify(thumbnails)); }
+  catch { /* Ignore storage quota errors; thumbnails can be regenerated. */ }
+}
+
+function AdminProductImage({
+  product,
+  imageUrl,
+  onInlineThumbnailReady,
+}: {
+  product: ApiProduct;
+  imageUrl: string;
+  onInlineThumbnailReady: (productId: string, thumbnailUrl: string) => void;
+}) {
+  const [failed, setFailed] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    if (imageUrl || !product.hasInlineImage || failed) return;
+
+    getProduct(product.id)
+      .then((fullProduct) => {
+        if (!fullProduct.imageUrl) return '';
+        return createImageThumbnailDataUrl(fullProduct.imageUrl);
+      })
+      .then((thumbnailUrl) => {
+        if (!cancelled && thumbnailUrl) {
+          onInlineThumbnailReady(product.id, thumbnailUrl);
+        }
+      })
+      .catch(() => {
+        if (!cancelled) setFailed(true);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [failed, imageUrl, onInlineThumbnailReady, product.hasInlineImage, product.id]);
+
+  if (imageUrl) {
+    return (
+      <img
+        src={imageUrl}
+        alt={product.name}
+        className="h-full w-full object-cover"
+        loading="lazy"
+        decoding="async"
+      />
+    );
+  }
+
+  if (product.hasInlineImage && !failed) {
+    return <Skeleton className="h-full w-full" />;
+  }
+
+  return (
+    <div className="flex h-full items-center justify-center text-xs font-bold uppercase text-slate-300">
+      No image
+    </div>
+  );
 }
 
 function ImageCropEditor({
@@ -148,6 +217,7 @@ export default function AdminProducts() {
   const [showForm, setShowForm] = useState(false);
   const [editing, setEditing] = useState<ApiProduct | null>(null);
   const [openingProductId, setOpeningProductId] = useState('');
+  const [inlineThumbnails, setInlineThumbnails] = useState<Record<string, string>>(() => loadInlineThumbnails());
   const [form, setForm] = useState(emptyForm);
   const [showCropEditor, setShowCropEditor] = useState(false);
   const [cropVersion, setCropVersion] = useState(0); // bump to re-read localStorage
@@ -162,6 +232,15 @@ export default function AdminProducts() {
 
   const visible = useMemo(() => products.filter((product) =>
     product.name.toLowerCase().includes(search.trim().toLowerCase())), [products, search]);
+
+  const rememberInlineThumbnail = useCallback((productId: string, thumbnailUrl: string) => {
+    setInlineThumbnails((current) => {
+      if (current[productId] === thumbnailUrl) return current;
+      const next = { ...current, [productId]: thumbnailUrl };
+      saveInlineThumbnails(next);
+      return next;
+    });
+  }, []);
 
   const openForm = async (product?: ApiProduct) => {
     if (!product) {
@@ -194,10 +273,22 @@ export default function AdminProducts() {
 
   const submit = async (event: FormEvent) => {
     event.preventDefault();
-    const payload = { name: form.name, imageUrl: form.imageUrl, price: Number(form.price), stock: Number(form.stock) };
+    const imageThumbnailUrl = form.imageUrl.startsWith('data:image/')
+      ? await createImageThumbnailDataUrl(form.imageUrl).catch(() => editing?.imageThumbnailUrl ?? undefined)
+      : undefined;
+    const payload = {
+      name: form.name,
+      imageUrl: form.imageUrl,
+      ...(imageThumbnailUrl ? { imageThumbnailUrl } : {}),
+      price: Number(form.price),
+      stock: Number(form.stock),
+    };
+
     try {
-      if (editing) await updateProduct(editing.id, payload);
-      else await createProduct(payload);
+      const savedProduct = editing ? await updateProduct(editing.id, payload) : await createProduct(payload);
+      if (imageThumbnailUrl) {
+        rememberInlineThumbnail(savedProduct.id, imageThumbnailUrl);
+      }
       setShowForm(false);
       await load();
     } catch (error) { setNotice(error instanceof Error ? error.message : 'Unable to save product.'); }
@@ -240,26 +331,23 @@ export default function AdminProducts() {
               </div>
             ))
           : visible.map((product) => {
-            // Prefer locally-cropped version, fall back to remote imageUrl, then mockup
-            const rawUrl = product.imageUrl || getTeeProductImage(product.id);
-            const imageUrl = getProductImageThumbnail(getCrop(product.id) || rawUrl, 420);
+            // Prefer local/user thumbnails, then remote URLs, then the catalog mockup.
+            const rawUrl =
+              getCrop(product.id) ||
+              product.imageThumbnailUrl ||
+              product.imageUrl ||
+              inlineThumbnails[product.id] ||
+              (product.hasInlineImage ? '' : getTeeProductImage(product.id));
+            const imageUrl = getProductImageThumbnail(rawUrl, 420);
             const isOpening = openingProductId === product.id;
             return (
               <article key={product.id} className="rounded-2xl border bg-white p-5 shadow-sm">
                 <div className="aspect-square overflow-hidden rounded-xl border border-slate-100 bg-slate-50">
-                  {imageUrl ? (
-                    <img
-                      src={imageUrl}
-                      alt={product.name}
-                      className="h-full w-full object-cover"
-                      loading="lazy"
-                      decoding="async"
-                    />
-                  ) : (
-                    <div className="flex h-full items-center justify-center text-xs font-bold uppercase text-slate-300">
-                      No image
-                    </div>
-                  )}
+                  <AdminProductImage
+                    product={product}
+                    imageUrl={imageUrl}
+                    onInlineThumbnailReady={rememberInlineThumbnail}
+                  />
                 </div>
                 <div className="mt-4 flex items-start justify-between gap-3">
                   <div>

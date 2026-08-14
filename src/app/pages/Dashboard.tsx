@@ -6,7 +6,7 @@ import { addCartItem as addApiCartItem, createProduct } from '../lib/api';
 import { createChatCompletion, createImagePrompt, generateImage, type ChatMessage } from '../lib/aiApi';
 import { getCloudinaryBrowseAssets } from '../lib/cloudinaryAssets';
 import { backMockupOptions, frontMockupOptions } from '../lib/cloudinaryMockups';
-import { formatVnd } from '../lib/commerce';
+import { createImageThumbnailDataUrl, formatVnd } from '../lib/commerce';
 import { addCartItem as addLocalCartItem, isAuthenticated } from '../lib/store';
 
 type DashboardMessage = ChatMessage;
@@ -574,7 +574,14 @@ export default function Dashboard() {
 
     try {
       const imageUrl = await createComposedMockupImage();
-      const product = await createProduct('Custom AI Studio T-shirt', CUSTOM_TEE_PRICE, CUSTOM_TEE_STOCK, imageUrl);
+      const imageThumbnailUrl = await createImageThumbnailDataUrl(imageUrl).catch(() => undefined);
+      const product = await createProduct(
+        'Custom AI Studio T-shirt',
+        CUSTOM_TEE_PRICE,
+        CUSTOM_TEE_STOCK,
+        imageUrl,
+        imageThumbnailUrl,
+      );
       await addApiCartItem(product.id, quantity, selectedSize);
       addLocalCartItem({
         id: `${product.id}-${selectedSize}`,

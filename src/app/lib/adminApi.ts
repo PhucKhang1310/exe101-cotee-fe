@@ -58,6 +58,7 @@ export function deleteAdminUser(id: string): Promise<void> {
 export function createProduct(payload: {
   name: string;
   imageUrl?: string;
+  imageThumbnailUrl?: string;
   price: number;
   stock: number;
 }): Promise<ApiProduct> {
@@ -66,7 +67,7 @@ export function createProduct(payload: {
 
 export function updateProduct(
   id: string,
-  payload: { name?: string; imageUrl?: string; price?: number; stock?: number },
+  payload: { name?: string; imageUrl?: string; imageThumbnailUrl?: string; price?: number; stock?: number },
 ): Promise<ApiProduct> {
   return request(`/api/Products/${encodeURIComponent(id)}`, {
     method: 'PUT',

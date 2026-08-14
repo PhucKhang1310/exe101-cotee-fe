@@ -458,6 +458,8 @@ export default function AdminOrders() {
                           </p>
                         )}
 
+                        <OrderTimeline currentStatus={order.orderStatus} draftStatus={draft.orderStatus} />
+
                         {!isTerminal && (
                           <details className="group mt-3 rounded-lg border border-slate-200 bg-white">
                             <summary className="flex min-h-10 cursor-pointer list-none items-center gap-2 px-3 text-sm font-bold text-slate-600 hover:bg-slate-50">
@@ -499,7 +501,6 @@ export default function AdminOrders() {
                                   Paid orders must be processing or later. Failed payments cannot be completed.
                                 </p>
                               )}
-                              <OrderTimeline currentStatus={order.orderStatus} draftStatus={draft.orderStatus} />
 
                               <div className="mt-4 flex flex-wrap items-center gap-2">
                                 <button

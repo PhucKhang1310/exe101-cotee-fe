@@ -1,13 +1,31 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Ban, Check, RefreshCw, RotateCcw, Save, Search, X } from 'lucide-react';
+import {
+  Ban,
+  Check,
+  ChevronDown,
+  CircleCheckBig,
+  PackageOpen,
+  RefreshCw,
+  RotateCcw,
+  Save,
+  Search,
+  Settings2,
+  Truck,
+  X,
+} from 'lucide-react';
 import type { ApiProduct } from '../../lib/api';
 import { cancelOrder, getAdminOrders, getAdminProductSummaries, updateOrderStatus, type AdminOrder } from '../../lib/adminApi';
 import { formatVnd, getProductImageThumbnail, getTeeProductImage } from '../../lib/commerce';
 import { Skeleton } from '../../components/ui/skeleton';
 
-const orderStatuses = ['Pending', 'Processing', 'Shipping', 'Completed', 'Cancelled'];
 const paymentStatuses = ['Pending', 'Paid', 'Failed'];
 const fulfillmentTimeline = ['Pending', 'Processing', 'Shipping', 'Completed'];
+
+const nextFulfillmentActions: Record<string, { status: string; label: string }> = {
+  Pending: { status: 'Processing', label: 'Start processing' },
+  Processing: { status: 'Shipping', label: 'Start shipping' },
+  Shipping: { status: 'Completed', label: 'Complete order' },
+};
 
 const nextOrderStatuses: Record<string, string[]> = {
   Pending: ['Pending', 'Processing', 'Cancelled'],
@@ -48,6 +66,12 @@ function isInvalidCombination(draft: DraftState) {
     (draft.paymentStatus === 'Paid' && (draft.orderStatus === 'Pending' || draft.orderStatus === 'Cancelled')) ||
     (draft.paymentStatus === 'Failed' && draft.orderStatus === 'Completed')
   );
+}
+
+function FulfillmentActionIcon({ status }: { status: string }) {
+  if (status === 'Shipping') return <Truck className="h-4 w-4" />;
+  if (status === 'Completed') return <CircleCheckBig className="h-4 w-4" />;
+  return <PackageOpen className="h-4 w-4" />;
 }
 
 function OrderTimeline({ currentStatus, draftStatus }: { currentStatus: string; draftStatus: string }) {
@@ -216,8 +240,31 @@ export default function AdminOrders() {
     }
   };
 
+  const advance = async (order: AdminOrder, nextStatus: string) => {
+    setSavingCode(order.orderCode);
+    setNotice('');
+
+    try {
+      const updated = await updateOrderStatus(order.orderCode, { orderStatus: nextStatus });
+      setOrders((current) => current.map((item) => item.id === updated.id ? updated : item));
+      resetDraft(updated);
+      setNotice(
+        nextStatus === 'Completed'
+          ? `Order ${updated.orderCode} completed.`
+          : `Order ${updated.orderCode} moved to ${nextStatus.toLowerCase()}.`,
+      );
+    } catch (error) {
+      setNotice(error instanceof Error ? error.message : 'Unable to update order.');
+    } finally {
+      setSavingCode('');
+    }
+  };
+
   const cancel = async (order: AdminOrder) => {
-    if (!window.confirm(`Cancel order ${order.orderCode}?`)) return;
+    const paymentWarning = order.paymentStatus === 'Paid'
+      ? '\n\nIts payment status will be changed to Failed.'
+      : '';
+    if (!window.confirm(`Cancel order ${order.orderCode}?${paymentWarning}`)) return;
     setSavingCode(order.orderCode);
     setNotice('');
 
@@ -239,7 +286,7 @@ export default function AdminOrders() {
         <div>
           <h2 className="text-3xl font-extrabold">Order State Management</h2>
           <p className="mt-2 max-w-2xl text-sm text-[#5a7899]">
-            Update payment and order status for customer orders. Paid orders move into processing, then shipping, then completed.
+            Manage payment and fulfillment for customer orders.
           </p>
         </div>
         <button
@@ -292,8 +339,8 @@ export default function AdminOrders() {
                         <Skeleton className="mt-1 h-3 w-48" />
                       </td>
                       <td className="px-5 py-4">
-                        <div className="w-[280px] rounded-lg border border-slate-100 bg-slate-50/70 p-3">
-                          <Skeleton className="h-64 w-64 rounded-lg" />
+                        <div className="w-[200px] rounded-lg border border-slate-100 bg-slate-50/70 p-3">
+                          <Skeleton className="h-44 w-44 rounded-lg" />
                           <Skeleton className="mt-3 h-4 w-40" />
                           <Skeleton className="mt-1 h-3 w-28" />
                         </div>
@@ -304,16 +351,12 @@ export default function AdminOrders() {
                         <Skeleton className="mt-2 h-6 w-28 rounded-lg" />
                       </td>
                       <td className="px-5 py-4">
-                        <div className="grid max-w-sm grid-cols-2 gap-3">
-                          <Skeleton className="h-10 rounded-lg" />
-                          <Skeleton className="h-10 rounded-lg" />
+                        <Skeleton className="h-3 w-24" />
+                        <div className="mt-2 grid w-[320px] grid-cols-[minmax(0,1fr)_112px] gap-2">
+                          <Skeleton className="h-11 rounded-lg" />
+                          <Skeleton className="h-11 rounded-lg" />
                         </div>
-                        <Skeleton className="mt-4 h-16 w-full rounded-lg" />
-                        <div className="mt-4 flex gap-2">
-                          <Skeleton className="h-10 w-36 rounded-lg" />
-                          <Skeleton className="h-10 w-24 rounded-lg" />
-                          <Skeleton className="h-10 w-28 rounded-lg" />
-                        </div>
+                        <Skeleton className="mt-3 h-10 w-[320px] rounded-lg" />
                       </td>
                     </tr>
                   ))
@@ -322,7 +365,10 @@ export default function AdminOrders() {
                 const hasChanges = draft.orderStatus !== order.orderStatus || draft.paymentStatus !== order.paymentStatus;
                 const invalid = isInvalidCombination(draft);
                 const isSaving = savingCode === order.orderCode;
-                const canCancel = order.paymentStatus !== 'Paid' && order.orderStatus !== 'Cancelled';
+                const nextAction = nextFulfillmentActions[order.orderStatus];
+                const canAdvance = Boolean(nextAction) && !(nextAction?.status === 'Completed' && order.paymentStatus === 'Failed');
+                const canCancel = order.orderStatus !== 'Completed' && order.orderStatus !== 'Cancelled';
+                const isTerminal = order.orderStatus === 'Completed' || order.orderStatus === 'Cancelled';
 
                 return (
                   <tr key={order.id} className="border-t align-top">
@@ -345,8 +391,8 @@ export default function AdminOrders() {
                           );
 
                           return (
-                            <div key={`${item.productId}-${item.size}`} className="w-[280px] rounded-lg border border-slate-100 bg-slate-50/70 p-3">
-                              <div className="h-64 w-64 overflow-hidden rounded-lg border border-slate-200 bg-white">
+                            <div key={`${item.productId}-${item.size}`} className="w-[200px] rounded-lg border border-slate-100 bg-slate-50/70 p-3">
+                              <div className="h-44 w-44 overflow-hidden rounded-lg border border-slate-200 bg-white">
                                 {imageUrl ? (
                                   <img src={imageUrl} alt={item.name} className="h-full w-full object-cover" loading="lazy" decoding="async" />
                                 ) : (
@@ -376,69 +422,108 @@ export default function AdminOrders() {
                       </div>
                     </td>
                     <td className="px-5 py-4">
-                      <div className="grid max-w-sm grid-cols-2 gap-3">
-                        <label className="text-xs font-bold uppercase text-slate-500">
-                          Payment
-                          <select
-                            value={draft.paymentStatus}
-                            onChange={(event) => setDraft(order, { paymentStatus: event.target.value })}
-                            disabled={isSaving || order.orderStatus === 'Completed'}
-                            className="mt-2 h-10 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-800 outline-none focus:border-[#6ecdf0] disabled:cursor-not-allowed disabled:opacity-60"
-                          >
-                            {paymentStatuses.map((status) => (
-                              <option key={status} value={status}>{status}</option>
-                            ))}
-                          </select>
-                        </label>
-                        <label className="text-xs font-bold uppercase text-slate-500">
-                          Status
-                          <select
-                            value={draft.orderStatus}
-                            onChange={(event) => setDraft(order, { orderStatus: event.target.value })}
-                            disabled={isSaving}
-                            className="mt-2 h-10 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-800 outline-none focus:border-[#6ecdf0] disabled:cursor-not-allowed disabled:opacity-60"
-                          >
-                            {getAllowedOrderStatuses(order).map((status) => (
-                              <option key={status} value={status}>{status}</option>
-                            ))}
-                          </select>
-                        </label>
-                      </div>
-                      {invalid && (
-                        <p className="mt-2 max-w-sm text-xs font-semibold text-red-600">
-                          Paid orders must be processing or later. Failed payments cannot be completed.
-                        </p>
-                      )}
-                      <OrderTimeline currentStatus={order.orderStatus} draftStatus={draft.orderStatus} />
+                      <div className="w-[320px] max-w-full">
+                        <p className="text-xs font-bold uppercase text-slate-500">Quick actions</p>
+                        {isTerminal ? (
+                          <div className="mt-2 flex min-h-11 items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 px-3 text-sm font-semibold text-slate-500">
+                            {order.orderStatus === 'Completed' ? <CircleCheckBig className="h-4 w-4 text-green-600" /> : <Ban className="h-4 w-4 text-red-500" />}
+                            No further order actions
+                          </div>
+                        ) : (
+                          <div className="mt-2 grid grid-cols-[minmax(0,1fr)_112px] gap-2">
+                            <button
+                              type="button"
+                              onClick={() => nextAction && void advance(order, nextAction.status)}
+                              disabled={!canAdvance || isSaving}
+                              title={!canAdvance && nextAction?.status === 'Completed' ? 'Change the failed payment status before completing this order.' : undefined}
+                              className="inline-flex min-h-11 min-w-0 items-center justify-center gap-2 rounded-lg bg-[#315fae] px-3 text-sm font-bold text-white hover:bg-[#244f92] disabled:cursor-not-allowed disabled:opacity-40"
+                            >
+                              {nextAction && <FulfillmentActionIcon status={nextAction.status} />}
+                              <span className="truncate">{isSaving ? 'Updating...' : nextAction?.label}</span>
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => void cancel(order)}
+                              disabled={!canCancel || isSaving}
+                              className="inline-flex min-h-11 min-w-0 items-center justify-center gap-2 rounded-lg border border-red-200 px-3 text-sm font-bold text-red-600 hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-40"
+                            >
+                              <Ban className="h-4 w-4" />
+                              Cancel
+                            </button>
+                          </div>
+                        )}
+                        {!canAdvance && nextAction?.status === 'Completed' && (
+                          <p className="mt-2 text-xs font-semibold text-red-600">
+                            Change the failed payment status before completing this order.
+                          </p>
+                        )}
 
-                      <div className="mt-4 flex flex-wrap items-center gap-2">
-                        <button
-                          type="button"
-                          onClick={() => void save(order)}
-                          disabled={!hasChanges || invalid || isSaving}
-                          className="inline-flex min-h-10 min-w-36 items-center justify-center gap-2 rounded-lg bg-[#315fae] px-4 text-sm font-bold text-white hover:bg-[#244f92] disabled:cursor-not-allowed disabled:opacity-40"
-                        >
-                          <Save className="h-4 w-4" />
-                          {isSaving ? 'Saving...' : 'Apply update'}
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => resetDraft(order)}
-                          disabled={!hasChanges || isSaving}
-                          className="inline-flex min-h-10 items-center justify-center gap-2 rounded-lg border border-slate-200 px-4 text-sm font-bold text-slate-700 hover:border-[#6ecdf0] disabled:cursor-not-allowed disabled:opacity-40"
-                        >
-                          <RotateCcw className="h-4 w-4" />
-                          Discard
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => void cancel(order)}
-                          disabled={!canCancel || isSaving}
-                          className="inline-flex min-h-10 items-center justify-center gap-2 rounded-lg border border-red-200 px-4 text-sm font-bold text-red-600 hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-40"
-                        >
-                          <Ban className="h-4 w-4" />
-                          Cancel order
-                        </button>
+                        {!isTerminal && (
+                          <details className="group mt-3 rounded-lg border border-slate-200 bg-white">
+                            <summary className="flex min-h-10 cursor-pointer list-none items-center gap-2 px-3 text-sm font-bold text-slate-600 hover:bg-slate-50">
+                              <Settings2 className="h-4 w-4" />
+                              More status options
+                              <ChevronDown className="ml-auto h-4 w-4 transition-transform group-open:rotate-180" />
+                            </summary>
+                            <div className="border-t border-slate-200 p-3">
+                              <div className="grid grid-cols-2 gap-3">
+                                <label className="text-xs font-bold uppercase text-slate-500">
+                                  Payment
+                                  <select
+                                    value={draft.paymentStatus}
+                                    onChange={(event) => setDraft(order, { paymentStatus: event.target.value })}
+                                    disabled={isSaving}
+                                    className="mt-2 h-10 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-800 outline-none focus:border-[#6ecdf0] disabled:cursor-not-allowed disabled:opacity-60"
+                                  >
+                                    {paymentStatuses.map((status) => (
+                                      <option key={status} value={status}>{status}</option>
+                                    ))}
+                                  </select>
+                                </label>
+                                <label className="text-xs font-bold uppercase text-slate-500">
+                                  Status
+                                  <select
+                                    value={draft.orderStatus}
+                                    onChange={(event) => setDraft(order, { orderStatus: event.target.value })}
+                                    disabled={isSaving}
+                                    className="mt-2 h-10 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-800 outline-none focus:border-[#6ecdf0] disabled:cursor-not-allowed disabled:opacity-60"
+                                  >
+                                    {getAllowedOrderStatuses(order).map((status) => (
+                                      <option key={status} value={status}>{status}</option>
+                                    ))}
+                                  </select>
+                                </label>
+                              </div>
+                              {invalid && (
+                                <p className="mt-2 text-xs font-semibold text-red-600">
+                                  Paid orders must be processing or later. Failed payments cannot be completed.
+                                </p>
+                              )}
+                              <OrderTimeline currentStatus={order.orderStatus} draftStatus={draft.orderStatus} />
+
+                              <div className="mt-4 flex flex-wrap items-center gap-2">
+                                <button
+                                  type="button"
+                                  onClick={() => void save(order)}
+                                  disabled={!hasChanges || invalid || isSaving}
+                                  className="inline-flex min-h-10 flex-1 items-center justify-center gap-2 rounded-lg bg-[#315fae] px-4 text-sm font-bold text-white hover:bg-[#244f92] disabled:cursor-not-allowed disabled:opacity-40"
+                                >
+                                  <Save className="h-4 w-4" />
+                                  {isSaving ? 'Saving...' : 'Apply update'}
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => resetDraft(order)}
+                                  disabled={!hasChanges || isSaving}
+                                  title="Discard changes"
+                                  className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-slate-200 text-slate-700 hover:border-[#6ecdf0] disabled:cursor-not-allowed disabled:opacity-40"
+                                >
+                                  <RotateCcw className="h-4 w-4" />
+                                </button>
+                              </div>
+                            </div>
+                          </details>
+                        )}
                       </div>
                     </td>
                   </tr>

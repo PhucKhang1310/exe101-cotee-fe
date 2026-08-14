@@ -4,6 +4,7 @@ import type { Area } from 'react-easy-crop';
 import { Pencil, Plus, Search, Trash2, X } from 'lucide-react';
 import { getProduct, type ApiProduct } from '../../lib/api';
 import { createProduct, deleteProduct, getAdminProductSummaries, updateProduct } from '../../lib/adminApi';
+import { loadAdminProductThumbnails, saveAdminProductThumbnails } from '../../lib/adminProductThumbnails';
 import { createImageThumbnailDataUrl, formatVnd, getProductImageThumbnail, getTeeProductImage } from '../../lib/commerce';
 import { Skeleton } from '../../components/ui/skeleton';
 
@@ -13,7 +14,6 @@ import { Skeleton } from '../../components/ui/skeleton';
 // On "Apply", the crop is rasterised to canvas and stored as a data URL in LS.
 
 const CROP_LS_KEY = 'cotee_product_crop';
-const INLINE_THUMBNAILS_LS_KEY = 'cotee_admin_product_inline_thumbnails';
 
 function loadCrops(): Record<string, string> {
   try { return JSON.parse(localStorage.getItem(CROP_LS_KEY) ?? '{}') as Record<string, string>; }
@@ -24,16 +24,6 @@ function saveCrop(productId: string, dataUrl: string) {
 }
 function getCrop(productId: string): string | null {
   return loadCrops()[productId] ?? null;
-}
-
-function loadInlineThumbnails(): Record<string, string> {
-  try { return JSON.parse(localStorage.getItem(INLINE_THUMBNAILS_LS_KEY) ?? '{}') as Record<string, string>; }
-  catch { return {}; }
-}
-
-function saveInlineThumbnails(thumbnails: Record<string, string>) {
-  try { localStorage.setItem(INLINE_THUMBNAILS_LS_KEY, JSON.stringify(thumbnails)); }
-  catch { /* Ignore storage quota errors; thumbnails can be regenerated. */ }
 }
 
 function AdminProductImage({
@@ -217,7 +207,7 @@ export default function AdminProducts() {
   const [showForm, setShowForm] = useState(false);
   const [editing, setEditing] = useState<ApiProduct | null>(null);
   const [openingProductId, setOpeningProductId] = useState('');
-  const [inlineThumbnails, setInlineThumbnails] = useState<Record<string, string>>(() => loadInlineThumbnails());
+  const [inlineThumbnails, setInlineThumbnails] = useState<Record<string, string>>(() => loadAdminProductThumbnails());
   const [form, setForm] = useState(emptyForm);
   const [showCropEditor, setShowCropEditor] = useState(false);
   const [cropVersion, setCropVersion] = useState(0); // bump to re-read localStorage
@@ -237,7 +227,7 @@ export default function AdminProducts() {
     setInlineThumbnails((current) => {
       if (current[productId] === thumbnailUrl) return current;
       const next = { ...current, [productId]: thumbnailUrl };
-      saveInlineThumbnails(next);
+      saveAdminProductThumbnails(next);
       return next;
     });
   }, []);

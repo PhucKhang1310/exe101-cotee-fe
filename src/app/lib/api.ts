@@ -62,6 +62,7 @@ export type CheckoutResponse = {
 export type ApiOrderItem = {
   productId: string;
   name: string;
+  imageThumbnailUrl?: string | null;
   priceAtPurchase: number;
   quantity: number;
   size: string;

@@ -13,9 +13,10 @@ import {
   Truck,
   X,
 } from 'lucide-react';
-import type { ApiProduct } from '../../lib/api';
+import { getProduct, type ApiProduct } from '../../lib/api';
 import { cancelOrder, getAdminOrders, getAdminProductSummaries, updateOrderStatus, type AdminOrder } from '../../lib/adminApi';
-import { formatVnd, getProductImageThumbnail, getTeeProductImage } from '../../lib/commerce';
+import { loadAdminProductThumbnails, saveAdminProductThumbnails } from '../../lib/adminProductThumbnails';
+import { createImageThumbnailDataUrl, formatVnd, getProductImageThumbnail, getTeeProductImage } from '../../lib/commerce';
 import { Skeleton } from '../../components/ui/skeleton';
 
 const paymentStatuses = ['Pending', 'Paid', 'Failed'];
@@ -148,6 +149,8 @@ function OrderTimeline({ currentStatus, draftStatus }: { currentStatus: string; 
 export default function AdminOrders() {
   const [orders, setOrders] = useState<AdminOrder[]>([]);
   const [products, setProducts] = useState<ApiProduct[]>([]);
+  const [inlineThumbnails, setInlineThumbnails] = useState<Record<string, string>>(() => loadAdminProductThumbnails());
+  const [thumbnailFailures, setThumbnailFailures] = useState<Record<string, boolean>>({});
   const [drafts, setDrafts] = useState<Record<string, DraftState>>({});
   const [search, setSearch] = useState('');
   const [notice, setNotice] = useState('');
@@ -190,6 +193,69 @@ export default function AdminOrders() {
     () => new Map(products.map((product) => [product.id, product])),
     [products],
   );
+
+  const productIdsWithoutSnapshots = useMemo(
+    () => new Set(
+      orders.flatMap((order) => order.items)
+        .filter((item) => !item.imageThumbnailUrl)
+        .map((item) => item.productId),
+    ),
+    [orders],
+  );
+
+  useEffect(() => {
+    const productsToRecover = products.filter((product) =>
+      productIdsWithoutSnapshots.has(product.id) &&
+      product.hasInlineImage &&
+      !product.imageThumbnailUrl &&
+      !product.imageUrl &&
+      !inlineThumbnails[product.id] &&
+      !thumbnailFailures[product.id],
+    );
+
+    if (productsToRecover.length === 0) return;
+
+    let cancelled = false;
+    Promise.all(productsToRecover.map(async (product) => {
+      try {
+        const fullProduct = await getProduct(product.id);
+        if (!fullProduct.imageUrl) return { productId: product.id, thumbnailUrl: '' };
+        const thumbnailUrl = await createImageThumbnailDataUrl(fullProduct.imageUrl);
+        return { productId: product.id, thumbnailUrl };
+      } catch {
+        return { productId: product.id, thumbnailUrl: '' };
+      }
+    })).then((results) => {
+      if (cancelled) return;
+
+      const recovered = results.filter((result) => result.thumbnailUrl);
+      if (recovered.length > 0) {
+        setInlineThumbnails((current) => {
+          const next = { ...current };
+          recovered.forEach(({ productId, thumbnailUrl }) => {
+            next[productId] = thumbnailUrl;
+          });
+          saveAdminProductThumbnails(next);
+          return next;
+        });
+      }
+
+      const failed = results.filter((result) => !result.thumbnailUrl);
+      if (failed.length > 0) {
+        setThumbnailFailures((current) => {
+          const next = { ...current };
+          failed.forEach(({ productId }) => {
+            next[productId] = true;
+          });
+          return next;
+        });
+      }
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [inlineThumbnails, productIdsWithoutSnapshots, products, thumbnailFailures]);
 
   const setDraft = (order: AdminOrder, patch: Partial<DraftState>) => {
     setDrafts((current) => {
@@ -385,8 +451,22 @@ export default function AdminOrders() {
                       <div className="space-y-3">
                         {order.items.map((item) => {
                           const product = productMap.get(item.productId);
+                          const isRecoveringInlineImage = Boolean(
+                            product?.hasInlineImage &&
+                            !item.imageThumbnailUrl &&
+                            !product.imageThumbnailUrl &&
+                            !product.imageUrl &&
+                            !inlineThumbnails[item.productId] &&
+                            !thumbnailFailures[item.productId],
+                          );
+                          const rawImageUrl =
+                            item.imageThumbnailUrl ||
+                            product?.imageThumbnailUrl ||
+                            product?.imageUrl ||
+                            inlineThumbnails[item.productId] ||
+                            (isRecoveringInlineImage ? '' : getTeeProductImage(item.productId));
                           const imageUrl = getProductImageThumbnail(
-                            product?.imageThumbnailUrl || product?.imageUrl || getTeeProductImage(item.productId),
+                            rawImageUrl,
                             320,
                           );
 
@@ -395,6 +475,8 @@ export default function AdminOrders() {
                               <div className="h-44 w-44 overflow-hidden rounded-lg border border-slate-200 bg-white">
                                 {imageUrl ? (
                                   <img src={imageUrl} alt={item.name} className="h-full w-full object-cover" loading="lazy" decoding="async" />
+                                ) : isRecoveringInlineImage ? (
+                                  <Skeleton className="h-full w-full" />
                                 ) : (
                                   <div className="grid h-full w-full place-items-center text-[10px] font-bold uppercase text-slate-300">
                                     No image

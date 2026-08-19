@@ -1,12 +1,11 @@
 import { type FormEvent, type KeyboardEvent, type PointerEvent, type WheelEvent, useCallback, useEffect, useRef, useState } from 'react';
 import { Minus, Plus, ShoppingBag } from 'lucide-react';
 import { useLocation, useNavigate } from 'react-router';
-import imgAiContentImage from '../../imports/Group1/34aa2522d02cc0844a881c632b21d1859df4cbc0.png';
 import { addCartItem as addApiCartItem, createProduct } from '../lib/api';
 import { createChatCompletion, createImagePrompt, generateImage, type ChatMessage } from '../lib/aiApi';
 import { getCloudinaryBrowseAssets } from '../lib/cloudinaryAssets';
 import { backMockupOptions, frontMockupOptions } from '../lib/cloudinaryMockups';
-import { createImageThumbnailDataUrl, formatVnd } from '../lib/commerce';
+import { createImageThumbnailDataUrl, formatVnd, getProductImageThumbnail } from '../lib/commerce';
 import { addCartItem as addLocalCartItem, isAuthenticated } from '../lib/store';
 
 type DashboardMessage = ChatMessage;
@@ -70,6 +69,7 @@ const STUDIO_HISTORY_KEY = 'cotee_studio_asset_history';
 const STUDIO_CHAT_HISTORY_KEY = 'cotee_studio_chat_history';
 const STUDIO_HISTORY_TTL_MS = 7 * 24 * 60 * 60 * 1000;
 const MAX_STUDIO_HISTORY_ITEMS = 12;
+const PLAIN_TEE_PRICE = 179000;
 const CUSTOM_TEE_PRICE = 249000;
 const CUSTOM_TEE_STOCK = 99;
 const sizes = ['XS', 'S', 'M', 'L', 'XL', '2XL'];
@@ -109,6 +109,12 @@ const getObjectCoverRect = (
     width,
     height,
   };
+};
+const getPlainTeeProductName = (label?: string) => {
+  const cleanedLabel = label?.replace(/\s+(front|back)$/i, '').trim();
+  if (!cleanedLabel) return 'Plain T-shirt';
+
+  return cleanedLabel.replace(/\bplain shirt\b/i, 'Plain T-shirt');
 };
 
 type StudioHistoryItem = {
@@ -291,6 +297,12 @@ export default function Dashboard() {
   const selectedShirtHistoryItem = shirtHistory.find(
     (item) => item.src === selectedMockupSrc || item.backSrc === selectedMockupSrc,
   );
+  const fallbackMockup = [...frontMockupOptions, ...backMockupOptions].find((item) => item.src === selectedMockupSrc);
+  const hasCustomDesign = Boolean(generatedImageSrc);
+  const shouldShowDesignOverlay = hasCustomDesign || isGeneratingImage;
+  const designImageSrc = generatedImageSrc;
+  const currentTeePrice = hasCustomDesign ? CUSTOM_TEE_PRICE : PLAIN_TEE_PRICE;
+  const selectedPlainShirtName = getPlainTeeProductName(selectedShirtHistoryItem?.label ?? fallbackMockup?.label);
 
   const addStudioHistoryItem = useCallback((item: Omit<StudioHistoryItem, 'createdAt' | 'expiresAt'>) => {
     setStudioHistory(() => {
@@ -455,11 +467,21 @@ export default function Dashboard() {
   };
 
   const handleResetDesign = () => {
+    if (!hasCustomDesign) {
+      setStudioNotice('No design selected.');
+      return;
+    }
+
     resetDesignPlacement();
     setStudioNotice('Design placement reset.');
   };
 
   const handleIncreaseDesignSize = () => {
+    if (!hasCustomDesign) {
+      setStudioNotice('No design selected.');
+      return;
+    }
+
     const designBox = designBoxRef.current;
     const canvas = canvasRef.current;
     if (!designBox || !canvas) return;
@@ -479,6 +501,12 @@ export default function Dashboard() {
   };
 
   const handleExportDesign = () => {
+    if (!designImageSrc) {
+      setStudioNotice('No design selected.');
+      setIsExportMenuOpen(false);
+      return;
+    }
+
     downloadImage(designImageSrc, 'cotee-design.png');
     setIsExportMenuOpen(false);
   };
@@ -486,7 +514,7 @@ export default function Dashboard() {
   const createComposedMockupImage = async () => {
     const canvasElement = canvasRef.current;
     const designBox = designBoxRef.current;
-    if (!canvasElement || !designBox || !selectedMockupSrc) {
+    if (!canvasElement || !designBox || !selectedMockupSrc || !designImageSrc) {
       throw new Error('The current shirt design is not ready yet.');
     }
 
@@ -497,7 +525,9 @@ export default function Dashboard() {
     exportCanvas.height = Math.round(canvasRect.height * window.devicePixelRatio);
 
     const context = exportCanvas.getContext('2d');
-    if (!context) return;
+    if (!context) {
+      throw new Error('Unable to export this shirt design.');
+    }
 
     const [shirtImage, designImage] = await Promise.all([
       loadExportImage(selectedMockupSrc),
@@ -556,9 +586,21 @@ export default function Dashboard() {
   };
 
   const handleExportBoth = async () => {
+    if (!hasCustomDesign) {
+      handleExportShirt();
+      return;
+    }
+
     const mockupImage = await createComposedMockupImage();
     downloadImage(mockupImage, 'cotee-mockup.png');
     setIsExportMenuOpen(false);
+  };
+
+  const handleClearDesign = () => {
+    setGeneratedImageSrc(null);
+    resetDesignPlacement();
+    setIsDesignSelected(false);
+    setStudioNotice('Plain T-shirt mode selected.');
   };
 
   const handleAddToCart = async () => {
@@ -573,11 +615,16 @@ export default function Dashboard() {
     setStudioNotice('');
 
     try {
-      const imageUrl = await createComposedMockupImage();
-      const imageThumbnailUrl = await createImageThumbnailDataUrl(imageUrl).catch(() => undefined);
+      const imageUrl = hasCustomDesign ? await createComposedMockupImage() : selectedMockupSrc;
+      const imageThumbnailUrl = hasCustomDesign
+        ? await createImageThumbnailDataUrl(imageUrl).catch(() => undefined)
+        : getProductImageThumbnail(imageUrl);
+      const productName = hasCustomDesign ? 'Custom AI Studio T-shirt' : selectedPlainShirtName;
+      const productPrice = hasCustomDesign ? CUSTOM_TEE_PRICE : PLAIN_TEE_PRICE;
+      const productCategory = hasCustomDesign ? 'Custom AI Studio Design' : 'Plain T-shirt';
       const product = await createProduct(
-        'Custom AI Studio T-shirt',
-        CUSTOM_TEE_PRICE,
+        productName,
+        productPrice,
         CUSTOM_TEE_STOCK,
         imageUrl,
         imageThumbnailUrl,
@@ -587,17 +634,17 @@ export default function Dashboard() {
         id: `${product.id}-${selectedSize}`,
         productId: product.id,
         name: product.name,
-        category: 'Custom AI Studio Design',
+        category: productCategory,
         price: product.price,
         image: imageUrl,
         size: selectedSize,
         color: '#315fae',
         quantity,
       });
-      setStudioNotice(`${quantity} custom T-shirt${quantity > 1 ? 's' : ''} added to cart.`);
+      setStudioNotice(`${quantity} ${hasCustomDesign ? 'custom' : 'plain'} T-shirt${quantity > 1 ? 's' : ''} added to cart.`);
       navigate('/cart');
     } catch (error) {
-      setStudioNotice(error instanceof Error ? error.message : 'Unable to add this custom T-shirt to cart.');
+      setStudioNotice(error instanceof Error ? error.message : 'Unable to add this T-shirt to cart.');
     } finally {
       setIsAddingToCart(false);
     }
@@ -903,7 +950,6 @@ export default function Dashboard() {
     }
   };
 
-  const designImageSrc = generatedImageSrc ?? imgAiContentImage;
   const isThinking = isSubmitting && !isGeneratingImage;
 
   return (
@@ -1061,7 +1107,8 @@ export default function Dashboard() {
             <button
               type="button"
               onClick={handleResetDesign}
-              className="p-2 hover:bg-[#e4f3fc] rounded-lg transition-colors"
+              disabled={!hasCustomDesign}
+              className="p-2 hover:bg-[#e4f3fc] rounded-lg transition-colors disabled:cursor-not-allowed disabled:opacity-40"
               aria-label="Reset design placement"
               title="Reset design placement"
             >
@@ -1072,7 +1119,8 @@ export default function Dashboard() {
             <button
               type="button"
               onClick={handleIncreaseDesignSize}
-              className="p-2 hover:bg-[#e4f3fc] rounded-lg transition-colors"
+              disabled={!hasCustomDesign}
+              className="p-2 hover:bg-[#e4f3fc] rounded-lg transition-colors disabled:cursor-not-allowed disabled:opacity-40"
               aria-label="Increase design size"
               title="Increase design size"
             >
@@ -1116,10 +1164,10 @@ export default function Dashboard() {
               onClick={handleAddToCart}
               disabled={isAddingToCart || isGeneratingImage}
               className="flex h-10 items-center gap-2 rounded-lg bg-[#102a56] px-4 text-sm font-bold text-white transition-colors hover:bg-[#12315f] disabled:cursor-not-allowed disabled:opacity-50"
-              title={`${formatVnd(CUSTOM_TEE_PRICE)} each`}
+              title={`${formatVnd(currentTeePrice)} each`}
             >
               <ShoppingBag className="h-4 w-4" />
-              <span>{isAddingToCart ? 'Adding...' : 'Add to cart'}</span>
+              <span className="whitespace-nowrap">{isAddingToCart ? 'Adding...' : `Add ${formatVnd(currentTeePrice)}`}</span>
             </button>
             <div className="relative">
               <button
@@ -1145,7 +1193,8 @@ export default function Dashboard() {
                   <button
                     type="button"
                     onClick={handleExportDesign}
-                    className="block w-full px-4 py-2 text-left hover:bg-[#eef8ff] hover:text-[#244f92]"
+                    disabled={!hasCustomDesign}
+                    className="block w-full px-4 py-2 text-left hover:bg-[#eef8ff] hover:text-[#244f92] disabled:cursor-not-allowed disabled:text-[#8ca9c5]"
                   >
                     Save design
                   </button>
@@ -1182,129 +1231,132 @@ export default function Dashboard() {
               )}
             </div>
 
-            {/* Design Overlay */}
-            <div
-              className="absolute top-1/4 left-1/4 right-1/4 bottom-1/3 flex items-center justify-center"
-              style={{ transform: `translate(${designOffset.x}px, ${designOffset.y}px)` }}
-            >
+            {shouldShowDesignOverlay && (
               <div
-                ref={designBoxRef}
-                className={`relative w-full h-full border-2 rounded-lg touch-none select-none ${
-                  isCropMode
-                    ? 'cursor-grab border-solid border-[#315fae] ring-2 ring-[#315fae]/20'
-                    : `cursor-move border-dashed ${isDesignSelected ? 'border-[rgba(49,95,174,0.4)]' : 'border-transparent'}`
-                }`}
-                style={designSize ? { width: designSize.width, height: designSize.height } : undefined}
-                onDoubleClick={handleDesignDoubleClick}
-                onWheel={handleDesignWheel}
-                onPointerDown={handleDesignPointerDown}
-                onPointerMove={handleDesignPointerMove}
-                onPointerUp={handleDesignPointerUp}
-                onPointerCancel={handleDesignPointerUp}
+                className="absolute top-1/4 left-1/4 right-1/4 bottom-1/3 flex items-center justify-center"
+                style={{ transform: `translate(${designOffset.x}px, ${designOffset.y}px)` }}
               >
-                {isCropMode && (
-                  <div
-                    className="absolute inset-0 pointer-events-none opacity-30"
-                    style={{ transform: `translate(${cropOffset.x}px, ${cropOffset.y}px)` }}
-                  >
-                    <img
-                      src={designImageSrc}
-                      alt=""
-                      draggable={false}
-                      className="w-full h-full object-cover select-none"
-                      style={{ transform: `scale(${cropScale})` }}
-                    />
-                  </div>
-                )}
-                <div className="absolute inset-0 overflow-hidden shadow-inner">
-                  <div
-                    className="absolute inset-0 pointer-events-none"
-                    style={{ transform: `translate(${cropOffset.x}px, ${cropOffset.y}px)` }}
-                  >
-                    <img
-                      src={designImageSrc}
-                      alt="Design"
-                      draggable={false}
-                      className="w-full h-full object-cover select-none opacity-75"
-                      style={{ transform: `scale(${cropScale})` }}
-                    />
-                  </div>
-                  {isCropMode && (
-                    <div className="absolute left-2 top-2 rounded bg-[#315fae] px-2 py-1 text-[10px] font-bold uppercase tracking-wide text-white pointer-events-none">
-                      Crop
+                <div
+                  ref={designBoxRef}
+                  className={`relative w-full h-full border-2 rounded-lg touch-none select-none ${
+                    isCropMode
+                      ? 'cursor-grab border-solid border-[#315fae] ring-2 ring-[#315fae]/20'
+                      : `cursor-move border-dashed ${isDesignSelected ? 'border-[rgba(49,95,174,0.4)]' : 'border-transparent'}`
+                  }`}
+                  style={designSize ? { width: designSize.width, height: designSize.height } : undefined}
+                  onDoubleClick={handleDesignDoubleClick}
+                  onWheel={handleDesignWheel}
+                  onPointerDown={handleDesignPointerDown}
+                  onPointerMove={handleDesignPointerMove}
+                  onPointerUp={handleDesignPointerUp}
+                  onPointerCancel={handleDesignPointerUp}
+                >
+                  {isCropMode && designImageSrc && (
+                    <div
+                      className="absolute inset-0 pointer-events-none opacity-30"
+                      style={{ transform: `translate(${cropOffset.x}px, ${cropOffset.y}px)` }}
+                    >
+                      <img
+                        src={designImageSrc}
+                        alt=""
+                        draggable={false}
+                        className="w-full h-full object-cover select-none"
+                        style={{ transform: `scale(${cropScale})` }}
+                      />
                     </div>
                   )}
-                  {isGeneratingImage && (
-                    <div className="absolute inset-0 bg-white/80 backdrop-blur-sm flex items-center justify-center">
-                      <span className="text-xs font-bold uppercase tracking-wide text-[#2e5aa7]">
-                        Generating image...
-                      </span>
-                    </div>
+                  <div className="absolute inset-0 overflow-hidden shadow-inner">
+                    {designImageSrc && (
+                      <div
+                        className="absolute inset-0 pointer-events-none"
+                        style={{ transform: `translate(${cropOffset.x}px, ${cropOffset.y}px)` }}
+                      >
+                        <img
+                          src={designImageSrc}
+                          alt="Design"
+                          draggable={false}
+                          className="w-full h-full object-cover select-none opacity-75"
+                          style={{ transform: `scale(${cropScale})` }}
+                        />
+                      </div>
+                    )}
+                    {isCropMode && (
+                      <div className="absolute left-2 top-2 rounded bg-[#315fae] px-2 py-1 text-[10px] font-bold uppercase tracking-wide text-white pointer-events-none">
+                        Crop
+                      </div>
+                    )}
+                    {isGeneratingImage && (
+                      <div className="absolute inset-0 bg-white/80 backdrop-blur-sm flex items-center justify-center">
+                        <span className="text-xs font-bold uppercase tracking-wide text-[#2e5aa7]">
+                          Generating image...
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                  {/* Transform handles */}
+                  {hasCustomDesign && isDesignSelected && (
+                    <>
+                      <div
+                        className="absolute -top-2 left-3 right-3 h-4 cursor-ns-resize z-10"
+                        onPointerDown={handleResizePointerDown('top')}
+                        onPointerMove={handleResizePointerMove}
+                        onPointerUp={handleResizePointerUp}
+                        onPointerCancel={handleResizePointerUp}
+                      />
+                      <div
+                        className="absolute -right-2 top-3 bottom-3 w-4 cursor-ew-resize z-10"
+                        onPointerDown={handleResizePointerDown('right')}
+                        onPointerMove={handleResizePointerMove}
+                        onPointerUp={handleResizePointerUp}
+                        onPointerCancel={handleResizePointerUp}
+                      />
+                      <div
+                        className="absolute -bottom-2 left-3 right-3 h-4 cursor-ns-resize z-10"
+                        onPointerDown={handleResizePointerDown('bottom')}
+                        onPointerMove={handleResizePointerMove}
+                        onPointerUp={handleResizePointerUp}
+                        onPointerCancel={handleResizePointerUp}
+                      />
+                      <div
+                        className="absolute -left-2 top-3 bottom-3 w-4 cursor-ew-resize z-10"
+                        onPointerDown={handleResizePointerDown('left')}
+                        onPointerMove={handleResizePointerMove}
+                        onPointerUp={handleResizePointerUp}
+                        onPointerCancel={handleResizePointerUp}
+                      />
+                      <div
+                        className="absolute -top-2 -left-2 w-4 h-4 bg-[#315fae] rounded-full border-2 border-white shadow-lg cursor-nwse-resize z-10"
+                        onPointerDown={handleResizePointerDown('top-left')}
+                        onPointerMove={handleResizePointerMove}
+                        onPointerUp={handleResizePointerUp}
+                        onPointerCancel={handleResizePointerUp}
+                      />
+                      <div
+                        className="absolute -top-2 -right-2 w-4 h-4 bg-[#315fae] rounded-full border-2 border-white shadow-lg cursor-nesw-resize z-10"
+                        onPointerDown={handleResizePointerDown('top-right')}
+                        onPointerMove={handleResizePointerMove}
+                        onPointerUp={handleResizePointerUp}
+                        onPointerCancel={handleResizePointerUp}
+                      />
+                      <div
+                        className="absolute -bottom-2 -left-2 w-4 h-4 bg-[#315fae] rounded-full border-2 border-white shadow-lg cursor-nesw-resize z-10"
+                        onPointerDown={handleResizePointerDown('bottom-left')}
+                        onPointerMove={handleResizePointerMove}
+                        onPointerUp={handleResizePointerUp}
+                        onPointerCancel={handleResizePointerUp}
+                      />
+                      <div
+                        className="absolute -bottom-2 -right-2 w-4 h-4 bg-[#315fae] rounded-full border-2 border-white shadow-lg cursor-nwse-resize z-10"
+                        onPointerDown={handleResizePointerDown('bottom-right')}
+                        onPointerMove={handleResizePointerMove}
+                        onPointerUp={handleResizePointerUp}
+                        onPointerCancel={handleResizePointerUp}
+                      />
+                    </>
                   )}
                 </div>
-                {/* Transform handles */}
-                {isDesignSelected && (
-                  <>
-                    <div
-                      className="absolute -top-2 left-3 right-3 h-4 cursor-ns-resize z-10"
-                      onPointerDown={handleResizePointerDown('top')}
-                      onPointerMove={handleResizePointerMove}
-                      onPointerUp={handleResizePointerUp}
-                      onPointerCancel={handleResizePointerUp}
-                    />
-                    <div
-                      className="absolute -right-2 top-3 bottom-3 w-4 cursor-ew-resize z-10"
-                      onPointerDown={handleResizePointerDown('right')}
-                      onPointerMove={handleResizePointerMove}
-                      onPointerUp={handleResizePointerUp}
-                      onPointerCancel={handleResizePointerUp}
-                    />
-                    <div
-                      className="absolute -bottom-2 left-3 right-3 h-4 cursor-ns-resize z-10"
-                      onPointerDown={handleResizePointerDown('bottom')}
-                      onPointerMove={handleResizePointerMove}
-                      onPointerUp={handleResizePointerUp}
-                      onPointerCancel={handleResizePointerUp}
-                    />
-                    <div
-                      className="absolute -left-2 top-3 bottom-3 w-4 cursor-ew-resize z-10"
-                      onPointerDown={handleResizePointerDown('left')}
-                      onPointerMove={handleResizePointerMove}
-                      onPointerUp={handleResizePointerUp}
-                      onPointerCancel={handleResizePointerUp}
-                    />
-                    <div
-                      className="absolute -top-2 -left-2 w-4 h-4 bg-[#315fae] rounded-full border-2 border-white shadow-lg cursor-nwse-resize z-10"
-                      onPointerDown={handleResizePointerDown('top-left')}
-                      onPointerMove={handleResizePointerMove}
-                      onPointerUp={handleResizePointerUp}
-                      onPointerCancel={handleResizePointerUp}
-                    />
-                    <div
-                      className="absolute -top-2 -right-2 w-4 h-4 bg-[#315fae] rounded-full border-2 border-white shadow-lg cursor-nesw-resize z-10"
-                      onPointerDown={handleResizePointerDown('top-right')}
-                      onPointerMove={handleResizePointerMove}
-                      onPointerUp={handleResizePointerUp}
-                      onPointerCancel={handleResizePointerUp}
-                    />
-                    <div
-                      className="absolute -bottom-2 -left-2 w-4 h-4 bg-[#315fae] rounded-full border-2 border-white shadow-lg cursor-nesw-resize z-10"
-                      onPointerDown={handleResizePointerDown('bottom-left')}
-                      onPointerMove={handleResizePointerMove}
-                      onPointerUp={handleResizePointerUp}
-                      onPointerCancel={handleResizePointerUp}
-                    />
-                    <div
-                      className="absolute -bottom-2 -right-2 w-4 h-4 bg-[#315fae] rounded-full border-2 border-white shadow-lg cursor-nwse-resize z-10"
-                      onPointerDown={handleResizePointerDown('bottom-right')}
-                      onPointerMove={handleResizePointerMove}
-                      onPointerUp={handleResizePointerUp}
-                      onPointerCancel={handleResizePointerUp}
-                    />
-                  </>
-                )}
               </div>
-            </div>
+            )}
 
             {/* Shadow overlay */}
             <div
@@ -1352,9 +1404,20 @@ export default function Dashboard() {
           <div className="absolute bottom-5 left-[10.25rem] right-5 flex gap-3 overflow-x-auto lg:bottom-10 lg:left-auto lg:right-8 lg:top-14 lg:w-36 lg:overflow-y-auto lg:overflow-x-hidden">
               <section className="w-36 shrink-0 rounded-xl border border-[#c9deef] bg-white/90 p-3 shadow-sm backdrop-blur">
                 <h3 className="mb-2 text-[10px] font-bold uppercase tracking-wide text-[#8ca9c5]">Designs</h3>
-                {designHistory.length > 0 ? (
-                  <div className="flex gap-2 lg:block lg:space-y-2">
-                    {designHistory.map((item) => (
+                <div className="flex gap-2 lg:block lg:space-y-2">
+                    <button
+                      type="button"
+                      onClick={handleClearDesign}
+                      className={`grid h-20 w-20 shrink-0 place-items-center rounded-lg border-2 px-2 text-center text-[11px] font-bold transition-all lg:h-16 lg:w-full ${
+                        !hasCustomDesign
+                          ? 'border-[#315fae] bg-[#eef8ff] text-[#244f92] shadow-md'
+                          : 'border-dashed border-[#b8d2e8] bg-white text-[#5a7899] hover:border-[#315fae] hover:bg-[#eef8ff]'
+                      }`}
+                    >
+                      No design
+                    </button>
+                  {designHistory.length > 0 ? (
+                    designHistory.map((item) => (
                       <button
                         key={item.id}
                         type="button"
@@ -1375,13 +1438,13 @@ export default function Dashboard() {
                           draggable={false}
                         />
                       </button>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="grid h-20 w-full place-items-center rounded-lg border border-dashed border-[#b8d2e8] px-3 text-center text-[11px] font-semibold text-[#8ca9c5]">
-                    No design history
-                  </div>
-                )}
+                    ))
+                  ) : (
+                    <div className="grid h-20 w-full place-items-center rounded-lg border border-dashed border-[#b8d2e8] px-3 text-center text-[11px] font-semibold text-[#8ca9c5]">
+                      No design history
+                    </div>
+                  )}
+                </div>
               </section>
           </div>
         </div>
